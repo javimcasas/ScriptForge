@@ -1,3 +1,5 @@
 node_modules/
 .DS_Store
 *.log
+templates/*.cfg
+!templates/mgmt-ip-gestion.cfg
