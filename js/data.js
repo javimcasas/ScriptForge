@@ -26,6 +26,18 @@ const ICON_SVG = {
 };
 
 // ─── COLOR PALETTE (rotativa para categorías dinámicas) ───────────────────────
+// Paleta de colores seleccionables en el picker de categorías
+const COLOR_OPTIONS = [
+  { id: 'teal',   label: 'Teal',   accent: 'var(--color-primary)',    bg: 'var(--color-primary-highlight)' },
+  { id: 'blue',   label: 'Blue',   accent: 'var(--color-blue)',       bg: 'var(--color-blue-highlight)' },
+  { id: 'orange', label: 'Orange', accent: 'var(--color-orange)',     bg: 'var(--color-warning-highlight)' },
+  { id: 'gold',   label: 'Gold',   accent: 'var(--color-gold)',       bg: 'var(--color-gold-highlight)' },
+  { id: 'green',  label: 'Green',  accent: 'var(--color-success)',    bg: 'var(--color-success-highlight)' },
+  { id: 'pink',   label: 'Pink',   accent: 'var(--color-error)',      bg: 'var(--color-error-highlight)' },
+  { id: 'purple', label: 'Purple', accent: 'var(--color-purple)',     bg: 'var(--color-purple-highlight)' },
+  { id: 'gray',   label: 'Gray',   accent: 'var(--color-text-muted)', bg: 'var(--color-surface-offset)' },
+];
+
 const CATEGORY_COLORS = [
   { accent: 'var(--color-primary)',      bg: 'var(--color-primary-highlight)' },
   { accent: 'var(--color-blue)',         bg: 'var(--color-blue-highlight)' },
@@ -39,6 +51,12 @@ const CATEGORY_COLORS = [
 
 // Devuelve el color asignado a una categoría (por índice estable)
 function getCategoryColor(categoryId) {
+  const cat = categories.find(c => c.id === categoryId);
+  if (cat?.color) {
+    const opt = COLOR_OPTIONS.find(o => o.id === cat.color);
+    if (opt) return { accent: opt.accent, bg: opt.bg };
+  }
+  // Fallback rotativo
   const idx = categories.findIndex(c => c.id === categoryId);
   return CATEGORY_COLORS[(idx < 0 ? 0 : idx) % CATEGORY_COLORS.length];
 }

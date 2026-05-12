@@ -30,5 +30,10 @@
   {
     "id": "TEST",
     "icon": "terminal"
+  },
+  {
+    "id": "Checking",
+    "icon": "lock",
+    "color": "pink"
   }
 ]

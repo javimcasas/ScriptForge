@@ -308,6 +308,10 @@ interface {INTERFAZ}
         <label class="form-label">Icono</label>
         <div class="icon-picker" id="iconPicker"></div>
       </div>
+      <div class="form-field">
+        <label class="form-label">Color</label>
+        <div class="color-picker" id="colorPicker"></div>
+      </div>
     </div>
     <div class="modal-footer">
       <button class="btn-ghost" onclick="closeModal('categoryModal')">Cancelar</button>
@@ -317,6 +321,51 @@ interface {INTERFAZ}
           <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
         </svg>
         Crear Categoría
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     MODAL: CONFIRMAR BORRADO
+     ============================================================ -->
+<div class="modal-overlay" id="deleteModal" role="dialog" aria-modal="true">
+  <div class="modal" style="max-width:420px">
+    <div class="modal-header">
+      <div class="modal-icon" style="background:var(--color-error-highlight); color:var(--color-error)">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="3 6 5 6 21 6"/>
+          <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+          <path d="M10 11v6M14 11v6"/>
+          <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
+        </svg>
+      </div>
+      <div>
+        <div class="modal-title">Eliminar template</div>
+        <div class="modal-subtitle">Esta acción no se puede deshacer</div>
+      </div>
+      <button class="modal-close" onclick="closeModal('deleteModal')" aria-label="Cerrar">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <path d="M18 6L6 18M6 6l12 12"/>
+        </svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <p style="font-size:var(--text-sm); color:var(--color-text-muted); line-height:1.6">
+        ¿Seguro que quieres eliminar el template
+        <strong style="color:var(--color-text)" id="deleteModalName"></strong>?
+        El archivo <code style="font-family:var(--font-mono); font-size:var(--text-xs); color:var(--color-error)">.cfg</code>
+        se borrará permanentemente de disco.
+      </p>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-ghost" onclick="closeModal('deleteModal')">Cancelar</button>
+      <button class="btn-delete" id="confirmDeleteBtn">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <polyline points="3 6 5 6 21 6"/>
+          <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+        </svg>
+        Eliminar
       </button>
     </div>
   </div>

@@ -1,6 +1,7 @@
 import http.server
 import os
 import json
+from turtle import color
 
 PORT = 5500
 TEMPLATES_DIR  = os.path.join(os.path.dirname(__file__), 'templates')
@@ -29,6 +30,13 @@ def write_categories(data):
 
 
 class ScriptForgeHandler(http.server.SimpleHTTPRequestHandler):
+    
+    def do_OPTIONS(self):
+        self.send_response(200)
+        self.send_header('Access-Control-Allow-Origin', '*')
+        self.send_header('Access-Control-Allow-Methods', 'GET, POST, DELETE, OPTIONS')
+        self.send_header('Access-Control-Allow-Headers', 'Content-Type')
+        self.end_headers()
 
     def do_GET(self):
         if self.path == '/api/templates':
@@ -71,14 +79,30 @@ class ScriptForgeHandler(http.server.SimpleHTTPRequestHandler):
                 data = json.loads(body)
                 name = data.get('id', '').strip()
                 icon = data.get('icon', 'folder').strip()
+                color = data.get('color', '').strip()
+                
                 if not name:
                     self._respond(400, {'error': 'El nombre es obligatorio'}); return
                 cats = read_categories()
                 if any(c['id'].lower() == name.lower() for c in cats):
                     self._respond(409, {'error': 'Ya existe esa categoría'}); return
-                cats.append({'id': name, 'icon': icon})
+                cats.append({'id': name, 'icon': icon, 'color': color})
                 write_categories(cats)
                 self._respond(200, {'ok': True, 'category': {'id': name, 'icon': icon}})
+            except Exception as e:
+                self._respond(500, {'error': str(e)})
+        else:
+            self._respond(404, {'error': 'Not found'})
+    
+    def do_DELETE(self):
+        if self.path.startswith('/api/templates/'):
+            filename = os.path.basename(self.path[len('/api/templates/'):])
+            filepath = os.path.join(TEMPLATES_DIR, filename)
+            try:
+                if not os.path.exists(filepath):
+                    self._respond(404, {'error': 'Archivo no encontrado'}); return
+                os.remove(filepath)
+                self._respond(200, {'ok': True})
             except Exception as e:
                 self._respond(500, {'error': str(e)})
         else:
@@ -90,6 +114,7 @@ class ScriptForgeHandler(http.server.SimpleHTTPRequestHandler):
         self.send_header('Content-Type', 'application/json')
         self.send_header('Content-Length', len(body))
         self.send_header('Access-Control-Allow-Origin', '*')
+        self.send_header('Access-Control-Allow-Methods', 'GET, POST, DELETE, OPTIONS')
         self.end_headers()
         self.wfile.write(body)
 

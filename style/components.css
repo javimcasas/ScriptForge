@@ -204,7 +204,7 @@
    IMPORT MODAL (TEXTAREA & INPUTS)
    ============================================================ */
 .import-textarea {
-  width: 100%; min-height: 180px; padding: var(--space-3);
+  width: 100%; min-height: 300px; padding: var(--space-3);
   background: var(--color-surface-offset);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
@@ -415,4 +415,61 @@
   color: var(--color-primary);
   outline: 1.5px solid var(--color-primary);
   outline-offset: -1px;
+}
+
+
+/* Botones de acción en cards */
+.card-actions {
+  display: flex;
+  gap: var(--space-1);
+  margin-left: auto;
+}
+.card-edit-btn,
+.card-delete-btn {
+  width: 26px; height: 26px;
+  border-radius: var(--radius-md);
+  display: flex; align-items: center; justify-content: center;
+  color: var(--color-text-faint);
+  opacity: 0;
+  transition: opacity var(--transition-interactive),
+              background var(--transition-interactive),
+              color var(--transition-interactive);
+  flex-shrink: 0;
+}
+.template-card:hover .card-edit-btn,
+.template-card:hover .card-delete-btn { opacity: 1; }
+.card-edit-btn:hover   { background: var(--color-surface-offset); color: var(--color-text); }
+.card-delete-btn:hover { background: var(--color-error-highlight); color: var(--color-error); }
+
+/* Botón eliminar en modal */
+.btn-delete {
+  height: 32px; padding: 0 var(--space-4);
+  background: var(--color-error); color: white;
+  border-radius: var(--radius-md); font-size: var(--text-xs); font-weight: 600;
+  display: flex; align-items: center; gap: var(--space-2);
+  transition: background var(--transition-interactive);
+}
+.btn-delete:hover { background: var(--color-error-hover); }
+
+.color-picker {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  background: var(--color-surface-offset);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+}
+.color-picker-btn {
+  width: 28px; height: 28px;
+  border-radius: var(--radius-full);
+  background: var(--swatch-color);
+  transition: transform var(--transition-interactive), box-shadow var(--transition-interactive);
+}
+.color-picker-btn:hover {
+  transform: scale(1.15);
+}
+.color-picker-btn.selected {
+  box-shadow: 0 0 0 2px var(--color-bg), 0 0 0 4px var(--swatch-color);
+  transform: scale(1.1);
 }

@@ -48,10 +48,16 @@ function parseCfg(text, filename) {
 
   if (!meta.name || !meta.category) return null;
 
+  // Normalizar categoría contra las existentes (case-insensitive)
+  const matchedCat = categories.find(
+    c => c.id.toLowerCase() === meta.category.toLowerCase()
+  );
+  const resolvedCategory = matchedCat ? matchedCat.id : meta.category;
+
   return {
     id: filename.replace('.cfg', ''),
     name: meta.name,
-    category: meta.category,
+    category: resolvedCategory,
     description: meta.description || '',
     content: contentLines.join('\n').trim()
   };

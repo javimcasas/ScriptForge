@@ -30,7 +30,6 @@ document.getElementById('importBtn').addEventListener('click', () => {
   openModal('importModal');
 });
 
-// Seleccionar archivo
 document.getElementById('browseBtn').addEventListener('click', () => {
   document.getElementById('cfgFileInput').click();
 });
@@ -38,13 +37,11 @@ document.getElementById('dropZone').addEventListener('click', (e) => {
   if (e.target.id !== 'browseBtn') document.getElementById('cfgFileInput').click();
 });
 
-// File input change
 document.getElementById('cfgFileInput').addEventListener('change', e => {
   const file = e.target.files[0];
   if (file) loadCfgFile(file);
 });
 
-// Drag & drop
 const dropZone = document.getElementById('dropZone');
 dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drag-over'); });
 dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
@@ -65,7 +62,7 @@ function loadCfgFile(file) {
   reader.readAsText(file);
 }
 
-// Tabs editor/ayuda
+// Tabs editor/ayuda (import modal)
 document.querySelectorAll('.editor-tab').forEach(tab => {
   tab.addEventListener('click', () => {
     document.querySelectorAll('.editor-tab').forEach(t => t.classList.remove('active'));
@@ -83,14 +80,12 @@ document.getElementById('importConfirmBtn').addEventListener('click', async () =
   const parsed = parseCfg(raw, 'manual-' + Date.now() + '.cfg');
   if (!parsed) { showToast('Faltan metadatos: name y category son obligatorios', true); return; }
 
-  // Generar nombre de archivo desde el nombre del template
   const filenameBase = parsed.name
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-|-$/g, '');
   const filename = `${parsed.category.toLowerCase()}-${filenameBase}.cfg`;
 
-  // Guardar en /templates via backend
   try {
     const res = await fetch('/api/templates', {
       method: 'POST',
@@ -100,8 +95,7 @@ document.getElementById('importConfirmBtn').addEventListener('click', async () =
     const result = await res.json();
     if (!res.ok) { showToast(result.error || 'Error al guardar', true); return; }
   } catch {
-    showToast('No se pudo conectar con el servidor', true);
-    return;
+    showToast('No se pudo conectar con el servidor', true); return;
   }
 
   templates.push(parsed);
@@ -119,11 +113,6 @@ document.getElementById('formModalBody').addEventListener('keydown', e => {
   if (e.key === 'Enter') generateScript();
 });
 
-// ─── FILTERS ──────────────────────────────────────────────────────────────────
-document.querySelectorAll('[data-filter]').forEach(el => {
-  el.addEventListener('click', () => setFilter(el.dataset.filter));
-});
-
 // ─── SEARCH ───────────────────────────────────────────────────────────────────
 document.getElementById('globalSearch').addEventListener('input', e => {
   searchQuery = e.target.value.trim();
@@ -138,7 +127,6 @@ document.querySelectorAll('.modal-overlay').forEach(overlay => {
 });
 document.addEventListener('keydown', e => {
   if (e.key === 'Escape') {
-    // No cerrar si el usuario está editando texto
     if (document.activeElement.tagName === 'TEXTAREA' || document.activeElement.tagName === 'INPUT') return;
     document.querySelectorAll('.modal-overlay.open').forEach(m => closeModal(m.id));
   }
@@ -172,11 +160,9 @@ document.getElementById('editSaveBtn').addEventListener('click', async () => {
     const result = await res.json();
     if (!res.ok) { showToast(result.error || 'Error al guardar', true); return; }
   } catch {
-    showToast('No se pudo conectar con el servidor', true);
-    return;
+    showToast('No se pudo conectar con el servidor', true); return;
   }
 
-  // Actualiza en memoria
   const idx = templates.findIndex(t => t.id === parsed.id);
   if (idx !== -1) templates[idx] = parsed;
 
@@ -187,54 +173,78 @@ document.getElementById('editSaveBtn').addEventListener('click', async () => {
 });
 
 // ─── CATEGORY MODAL ───────────────────────────────────────────────────────────
-(function buildIconPicker() {
-  const picker = document.getElementById('iconPicker');
-  let selectedIcon = 'folder';
+// Estado del modal, vive fuera para que confirmCategoryBtn lo lea
+let _selectedIcon  = 'folder';
+let _selectedColor = COLOR_OPTIONS[0].id;
+
+// Se llama desde renderSidebar() al hacer click en el botón +
+function buildCategoryModal() {
+  _selectedIcon  = 'folder';
+  _selectedColor = COLOR_OPTIONS[0].id;
+  document.getElementById('catNameInput').value = '';
+
+  // ── Icon picker ──────────────────────────────────────────────────────────
+  const iconPicker = document.getElementById('iconPicker');
+  iconPicker.innerHTML = '';
 
   Object.entries(ICON_SVG).forEach(([key, svg]) => {
     const btn = document.createElement('button');
+    btn.type = 'button';
     btn.className = 'icon-picker-btn';
     btn.dataset.icon = key;
     btn.title = key;
     btn.innerHTML = svg.replace('width="13" height="13"', 'width="16" height="16"');
-    if (key === selectedIcon) btn.classList.add('selected');
-
+    if (key === _selectedIcon) btn.classList.add('selected');
     btn.addEventListener('click', () => {
-      picker.querySelectorAll('.icon-picker-btn').forEach(b => b.classList.remove('selected'));
+      iconPicker.querySelectorAll('.icon-picker-btn').forEach(b => b.classList.remove('selected'));
       btn.classList.add('selected');
-      selectedIcon = key;
+      _selectedIcon = key;
     });
-
-    picker.appendChild(btn);
+    iconPicker.appendChild(btn);
   });
 
-  document.getElementById('confirmCategoryBtn').addEventListener('click', async () => {
-    const name = document.getElementById('catNameInput').value.trim();
-    if (!name) { showToast('El nombre es obligatorio', true); return; }
+  // ── Color picker ─────────────────────────────────────────────────────────
+  const colorPicker = document.getElementById('colorPicker');
+  colorPicker.innerHTML = '';
 
-    try {
-      const res = await fetch('/api/categories', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id: name, icon: selectedIcon })
-      });
-      const result = await res.json();
-      if (!res.ok) { showToast(result.error || 'Error al crear categoría', true); return; }
-    } catch {
-      showToast('No se pudo conectar con el servidor', true); return;
-    }
-
-    categories.push({ id: name, icon: selectedIcon });
-    document.getElementById('catNameInput').value = '';
-    picker.querySelectorAll('.icon-picker-btn').forEach(b =>
-      b.classList.toggle('selected', b.dataset.icon === 'folder')
-    );
-    selectedIcon = 'folder';
-
-    closeModal('categoryModal');
-    renderSidebar();
-    renderFilterBar();
-    updateCounts();
-    showToast(`Categoría "${name}" creada`);
+  COLOR_OPTIONS.forEach(opt => {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'color-picker-btn';
+    btn.dataset.color = opt.id;
+    btn.title = opt.label;
+    btn.style.setProperty('--swatch-color', opt.accent);
+    if (opt.id === _selectedColor) btn.classList.add('selected');
+    btn.addEventListener('click', () => {
+      colorPicker.querySelectorAll('.color-picker-btn').forEach(b => b.classList.remove('selected'));
+      btn.classList.add('selected');
+      _selectedColor = opt.id;
+    });
+    colorPicker.appendChild(btn);
   });
-})();
+}
+
+// ─── CONFIRM CATEGORY ─────────────────────────────────────────────────────────
+document.getElementById('confirmCategoryBtn').addEventListener('click', async () => {
+  const name = document.getElementById('catNameInput').value.trim();
+  if (!name) { showToast('El nombre es obligatorio', true); return; }
+
+  try {
+    const res = await fetch('/api/categories', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: name, icon: _selectedIcon, color: _selectedColor })
+    });
+    const result = await res.json();
+    if (!res.ok) { showToast(result.error || 'Error al crear categoría', true); return; }
+  } catch {
+    showToast('No se pudo conectar con el servidor', true); return;
+  }
+
+  categories.push({ id: name, icon: _selectedIcon, color: _selectedColor });
+  closeModal('categoryModal');
+  renderSidebar();
+  renderFilterBar();
+  updateCounts();
+  showToast(`Categoría "${name}" creada`);
+});

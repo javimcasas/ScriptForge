@@ -43,6 +43,7 @@ function renderSidebar() {
 
   // Botón nueva categoría
   document.getElementById('addCategoryBtn').addEventListener('click', () => {
+    buildCategoryModal();
     openModal('categoryModal');
   });
 
@@ -150,35 +151,49 @@ function renderGrid() {
     card.setAttribute('aria-label', `Abrir template ${t.name}`);
 
     card.innerHTML = `
-      <div class="card-header">
-        <div class="card-icon">${getCategoryIcon(t.category)}</div>
-        <span class="card-badge">${t.category}</span>
-        <button class="card-edit-btn" data-id="${t.id}" aria-label="Editar template" title="Editar">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
-            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
-          </svg>
-        </button>
-      </div>
-      <div class="card-name">${t.name}</div>
-      <div class="card-desc">${t.description}</div>
-      <div class="card-footer">
-        <div class="card-vars">
-          ${dots}
-          <span style="margin-left:4px">${vars.length} variable${vars.length !== 1 ? 's' : ''}</span>
+        <div class="card-header">
+            <div class="card-icon">${getCategoryIcon(t.category)}</div>
+            <span class="card-badge">${t.category}</span>
+            <div class="card-actions">
+            <button class="card-edit-btn" data-id="${t.id}" aria-label="Editar template" title="Editar">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                </svg>
+            </button>
+            <button class="card-delete-btn" data-id="${t.id}" aria-label="Borrar template" title="Borrar">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <polyline points="3 6 5 6 21 6"/>
+                <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+                <path d="M10 11v6M14 11v6"/>
+                <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
+                </svg>
+            </button>
+            </div>
         </div>
-        <span class="card-arrow">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-            <path d="M5 12h14M12 5l7 7-7 7"/>
-          </svg>
-        </span>
-      </div>`;
+        <div class="card-name">${t.name}</div>
+        <div class="card-desc">${t.description}</div>
+        <div class="card-footer">
+            <div class="card-vars">
+            ${dots}
+            <span style="margin-left:4px">${vars.length} variable${vars.length !== 1 ? 's' : ''}</span>
+            </div>
+            <span class="card-arrow">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <path d="M5 12h14M12 5l7 7-7 7"/>
+            </svg>
+            </span>
+        </div>`;
 
     card.addEventListener('click', () => openFormModal(t));
     card.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') openFormModal(t); });
     card.querySelector('.card-edit-btn').addEventListener('click', e => {
-      e.stopPropagation();
-      openEditModal(t);
+        e.stopPropagation();
+        openEditModal(t);
+    });
+    card.querySelector('.card-delete-btn').addEventListener('click', e => {
+        e.stopPropagation();
+        openDeleteModal(t);
     });
 
     grid.appendChild(card);
@@ -264,4 +279,24 @@ function showToast(msg, isError = false) {
   dot.classList.toggle('error', isError);
   toast.classList.add('show');
   setTimeout(() => toast.classList.remove('show'), 3000);
+}
+
+function openDeleteModal(template) {
+  const modal = document.getElementById('deleteModal');
+  document.getElementById('deleteModalName').textContent = template.name;
+  document.getElementById('confirmDeleteBtn').onclick = async () => {
+    try {
+      const res = await fetch(`/api/templates/${template.id}.cfg`, { method: 'DELETE' });
+      const result = await res.json();
+      if (!res.ok) { showToast(result.error || 'Error al borrar', true); return; }
+    } catch {
+      showToast('No se pudo conectar con el servidor', true); return;
+    }
+    templates = templates.filter(t => t.id !== template.id);
+    closeModal('deleteModal');
+    updateCounts();
+    renderGrid();
+    showToast(`Template "${template.name}" eliminado`);
+  };
+  openModal('deleteModal');
 }
