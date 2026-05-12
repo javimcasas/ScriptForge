@@ -1,4 +1,7 @@
 @import './tokens.css';
 @import './base.css';
-@import './components.css';
+@import './sidebar.css';
+@import './template.css';
+@import './modals.css';
+@import './toast.css';
 @import './responsive.css';

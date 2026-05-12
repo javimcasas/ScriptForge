@@ -1,0 +1,57 @@
+/* ============================================================
+   SIDEBAR
+   ============================================================ */
+.sidebar-item { gap: var(--space-2); }
+
+.sidebar-section-header {
+  display: flex; align-items: center;
+  justify-content: space-between;
+  padding-right: var(--space-2);
+}
+.sidebar-add-cat {
+  width: 20px; height: 20px;
+  border-radius: var(--radius-sm);
+  display: flex; align-items: center; justify-content: center;
+  color: var(--color-text-faint);
+  transition: background var(--transition-interactive), color var(--transition-interactive);
+}
+.sidebar-add-cat:hover { background: var(--color-surface-offset); color: var(--color-primary); }
+
+/* ── Drag handle ── */
+.sidebar-drag-handle {
+  display: flex; align-items: center;
+  width: 14px; padding: 0; margin-right: 0;
+  color: var(--color-text-faint);
+  opacity: 0; cursor: grab; flex-shrink: 0;
+  transition: opacity var(--transition-interactive);
+}
+.sidebar-item:hover .sidebar-drag-handle { opacity: 1; }
+.sidebar-drag-handle:active { cursor: grabbing; }
+
+/* ── Category label ── */
+.sidebar-cat-label {
+  flex: 1;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+
+/* ── Count badge ── */
+.sidebar-item .count { margin-left: 0; flex-shrink: 0; }
+
+/* ── Delete button ── */
+.sidebar-delete-cat {
+  width: 18px; height: 18px;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: var(--radius-sm);
+  color: var(--color-text-faint);
+  opacity: 0; flex-shrink: 0;
+  margin-left: var(--space-1);
+  transition: opacity var(--transition-interactive),
+              background var(--transition-interactive),
+              color var(--transition-interactive);
+}
+.sidebar-item:hover .sidebar-delete-cat { opacity: 1; }
+.sidebar-delete-cat:hover { background: var(--color-error-highlight); color: var(--color-error); }
+
+/* ── Drag states ── */
+.sidebar-item.dragging  { opacity: 0.4; }
+.sidebar-item.drag-over { background: var(--color-primary-highlight); color: var(--color-primary); }

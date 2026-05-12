@@ -1,39 +1,35 @@
 [
   {
-    "id": "VLAN",
-    "icon": "network"
+    "id": "Management",
+    "icon": "settings"
   },
   {
-    "id": "AAA",
-    "icon": "shield"
+    "id": "VLAN",
+    "icon": "network"
   },
   {
     "id": "NTP",
     "icon": "clock"
   },
   {
-    "id": "SNMP",
-    "icon": "activity"
-  },
-  {
-    "id": "Management",
-    "icon": "settings"
+    "id": "AAA",
+    "icon": "shield"
   },
   {
     "id": "Trunks",
     "icon": "list"
   },
   {
-    "id": "Otros",
-    "icon": "more-horizontal"
-  },
-  {
-    "id": "TEST",
-    "icon": "terminal"
+    "id": "SNMP",
+    "icon": "activity"
   },
   {
     "id": "Checking",
     "icon": "lock",
     "color": "pink"
+  },
+  {
+    "id": "Otros",
+    "icon": "more-horizontal"
   }
 ]

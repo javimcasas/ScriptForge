@@ -28,6 +28,8 @@ async function loadTemplates() {
     console.error('Error cargando datos:', e);
     templates = []; categories = [];
   }
+
+  renderHelpCats();
 }
 
 function parseCfg(text, filename) {

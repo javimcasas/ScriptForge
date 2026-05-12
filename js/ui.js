@@ -3,13 +3,31 @@ function renderSidebar() {
   const sidebar = document.getElementById('sidebar');
 
   // Construye los items de categoría dinámicamente
-  const catItems = categories.map(cat => `
-    <button class="sidebar-item" data-filter="${cat.id}">
-      ${getCategoryIcon(cat.id)}
-      ${cat.id}
-      <span class="count" id="count-${cat.id}">0</span>
-    </button>
-  `).join('');
+    const catItems = categories.map(cat => `
+    <div class="sidebar-item" data-filter="${cat.id}" role="button" tabindex="0">
+        <span class="sidebar-drag-handle" title="Arrastrar para reordenar">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <circle cx="9"  cy="5"  r="1" fill="currentColor"/>
+            <circle cx="9"  cy="12" r="1" fill="currentColor"/>
+            <circle cx="9"  cy="19" r="1" fill="currentColor"/>
+            <circle cx="15" cy="5"  r="1" fill="currentColor"/>
+            <circle cx="15" cy="12" r="1" fill="currentColor"/>
+            <circle cx="15" cy="19" r="1" fill="currentColor"/>
+        </svg>
+        </span>
+        ${getCategoryIcon(cat.id)}
+        <span class="sidebar-cat-label">${cat.id}</span>
+        <span class="count" id="count-${cat.id}">0</span>
+        <button class="sidebar-delete-cat" data-cat="${cat.id}" title="Eliminar categoría" aria-label="Eliminar ${cat.id}">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <polyline points="3 6 5 6 21 6"/>
+            <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+            <path d="M10 11v6M14 11v6"/>
+            <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
+        </svg>
+        </button>
+    </div>
+    `).join('');
 
   sidebar.innerHTML = `
     <span class="sidebar-section-label">Vistas</span>
@@ -37,10 +55,15 @@ function renderSidebar() {
   `;
 
   // Re-bind filters tras regenerar el DOM
-  sidebar.querySelectorAll('[data-filter]').forEach(el => {
-    el.addEventListener('click', () => setFilter(el.dataset.filter));
-  });
-
+    sidebar.querySelectorAll('[data-filter]').forEach(el => {
+        el.addEventListener('click', () => setFilter(el.dataset.filter));
+        // Soporte teclado para los divs de categoría
+        if (el.tagName === 'DIV') {
+            el.addEventListener('keydown', e => {
+            if (e.key === 'Enter' || e.key === ' ') setFilter(el.dataset.filter);
+            });
+        }
+    });
   // Botón nueva categoría
   document.getElementById('addCategoryBtn').addEventListener('click', () => {
     buildCategoryModal();
@@ -49,6 +72,15 @@ function renderSidebar() {
 
   // Marcar activo
   highlightActiveFilter();
+  sidebar.querySelectorAll('.sidebar-delete-cat').forEach(btn => {
+    btn.addEventListener('click', e => {
+        e.stopPropagation(); // no activar el filtro
+        openDeleteCatModal(btn.dataset.cat);
+    });
+   });
+
+  renderHelpCats();
+  initSidebarDrag();
 }
 
 // ─── RENDER FILTER BAR ────────────────────────────────────────────────────────
@@ -299,4 +331,17 @@ function openDeleteModal(template) {
     showToast(`Template "${template.name}" eliminado`);
   };
   openModal('deleteModal');
+}
+
+function renderHelpCats() {
+  // Actualiza ambos paneles de ayuda (import y edit modal)
+  document.querySelectorAll('.help-cats').forEach(container => {
+    container.innerHTML = categories.map(cat => {
+      const color = getCategoryColor(cat.id);
+      return `<span class="cat-chip" style="
+        background: ${color.bg};
+        color: ${color.accent};
+      ">${cat.id}</span>`;
+    }).join('');
+  });
 }
