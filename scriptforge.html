@@ -197,30 +197,78 @@
      MODAL: IMPORTAR TEMPLATE
      ============================================================ -->
 <div class="modal-overlay" id="importModal" role="dialog" aria-modal="true" aria-labelledby="importModalTitle">
-  <div class="modal">
+  <div class="modal import-modal">
     <div class="modal-header">
       <div class="modal-icon" style="background:var(--color-primary-highlight); color:var(--color-primary)">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12l7 7 7-7"/></svg>
       </div>
       <div>
-        <div class="modal-title" id="importModalTitle">Importar Template</div>
-        <div class="modal-subtitle">Pega el JSON de un template exportado</div>
+        <div class="modal-title" id="importModalTitle">Nuevo Template</div>
+        <div class="modal-subtitle">Carga un .cfg o escríbelo manualmente</div>
       </div>
       <button class="modal-close" onclick="closeModal('importModal')" aria-label="Cerrar">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6L6 18M6 6l12 12"/></svg>
       </button>
     </div>
+
     <div class="modal-body">
-      <div class="form-group">
-        <label class="form-label" for="importJson">JSON del template</label>
-        <textarea class="form-textarea" id="importJson" rows="10" placeholder='{"id":"mi-template","name":"Mi Template","category":"VLAN","description":"...","variables":[...],"template":"..."}'></textarea>
+
+      <!-- DROP ZONE -->
+      <div class="drop-zone" id="dropZone">
+        <input type="file" id="cfgFileInput" accept=".cfg" hidden>
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        <p class="drop-zone-text">Arrastra un archivo <strong>.cfg</strong> aquí</p>
+        <button class="btn-ghost" id="browseBtn" type="button">Seleccionar archivo</button>
       </div>
+
+      <!-- EDITOR TABS -->
+      <div class="editor-tabs">
+        <button class="editor-tab active" data-tab="editor">Editor</button>
+        <button class="editor-tab" data-tab="help">Ayuda</button>
+      </div>
+
+      <!-- EDITOR PANEL -->
+      <div class="editor-panel" id="tabEditor">
+        <textarea class="import-textarea" id="cfgEditor" spellcheck="false"
+          placeholder="# name: Mi Template&#10;# category: Management&#10;# description: Descripción del template.&#10;&#10;sysname {HOSTNAME}"></textarea>
+      </div>
+
+      <!-- HELP PANEL -->
+      <div class="editor-panel hidden" id="tabHelp">
+        <div class="help-content">
+          <p class="help-title">Formato del archivo .cfg</p>
+          <p class="help-desc">Las primeras líneas son metadatos (empiezan con <code>#</code>). El resto es el script.</p>
+          <pre class="help-example"># name: Nombre visible en la card
+# category: Management
+# description: Descripción breve.
+
+sysname {HOSTNAME}
+!
+interface {INTERFAZ}
+ ip address {IP} {MASCARA}</pre>
+          <p class="help-title">Categorías disponibles</p>
+          <div class="help-cats">
+            <span class="cat-chip cat-vlan">VLAN</span>
+            <span class="cat-chip cat-aaa">AAA</span>
+            <span class="cat-chip cat-ntp">NTP</span>
+            <span class="cat-chip cat-snmp">SNMP</span>
+            <span class="cat-chip cat-mgmt">Management</span>
+            <span class="cat-chip cat-trunk">Trunks</span>
+            <span class="cat-chip cat-otros">Otros</span>
+          </div>
+          <p class="help-title">Variables</p>
+          <p class="help-desc">Escribe las variables entre llaves en mayúsculas: <code>{NOMBRE_VARIABLE}</code>. Se generará un campo de formulario por cada una.</p>
+        </div>
+      </div>
+
     </div>
+
     <div class="modal-footer">
+      <span class="import-filename" id="importFilename"></span>
       <button class="btn-ghost" onclick="closeModal('importModal')">Cancelar</button>
-      <button class="btn-primary" id="importConfirmBtn">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12l7 7 7-7"/></svg>
-        Importar
+      <button class="btn-success" id="importConfirmBtn">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+        Cargar Template
       </button>
     </div>
   </div>
@@ -240,7 +288,9 @@
 <script src="./js/ui.js"></script>
 <script src="./js/events.js"></script>
 <script>
-  updateCounts();
-  renderGrid();
+  loadTemplates().then(() => {
+    updateCounts();
+    renderGrid();
+  });
 </script>
 </body>

@@ -24,27 +24,93 @@ document.getElementById('downloadBtn').addEventListener('click', () => {
 });
 
 // ─── IMPORT ───────────────────────────────────────────────────────────────────
-document.getElementById('importBtn').addEventListener('click', () => openModal('importModal'));
+document.getElementById('importBtn').addEventListener('click', () => {
+  document.getElementById('cfgEditor').value = '';
+  document.getElementById('importFilename').textContent = '';
+  openModal('importModal');
+});
 
-document.getElementById('saveImportBtn').addEventListener('click', () => {
-  const name     = document.getElementById('importName').value.trim();
-  const desc     = document.getElementById('importDesc').value.trim();
-  const category = document.getElementById('importCategory').value;
-  const content  = document.getElementById('importContent').value.trim();
+// Seleccionar archivo
+document.getElementById('browseBtn').addEventListener('click', () => {
+  document.getElementById('cfgFileInput').click();
+});
+document.getElementById('dropZone').addEventListener('click', (e) => {
+  if (e.target.id !== 'browseBtn') document.getElementById('cfgFileInput').click();
+});
 
-  if (!name)    { showToast('El nombre es obligatorio', true); return; }
-  if (!content) { showToast('El contenido del script es obligatorio', true); return; }
+// File input change
+document.getElementById('cfgFileInput').addEventListener('change', e => {
+  const file = e.target.files[0];
+  if (file) loadCfgFile(file);
+});
 
-  templates.push({ id: 't' + Date.now(), name, description: desc || 'Sin descripción', category, content });
+// Drag & drop
+const dropZone = document.getElementById('dropZone');
+dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drag-over'); });
+dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+dropZone.addEventListener('drop', e => {
+  e.preventDefault();
+  dropZone.classList.remove('drag-over');
+  const file = e.dataTransfer.files[0];
+  if (file && file.name.endsWith('.cfg')) loadCfgFile(file);
+  else showToast('Solo se admiten archivos .cfg', true);
+});
 
-  document.getElementById('importName').value    = '';
-  document.getElementById('importDesc').value    = '';
-  document.getElementById('importContent').value = '';
+function loadCfgFile(file) {
+  const reader = new FileReader();
+  reader.onload = e => {
+    document.getElementById('cfgEditor').value = e.target.result;
+    document.getElementById('importFilename').textContent = file.name;
+  };
+  reader.readAsText(file);
+}
 
+// Tabs editor/ayuda
+document.querySelectorAll('.editor-tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.editor-tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    document.getElementById('tabEditor').classList.toggle('hidden', tab.dataset.tab !== 'editor');
+    document.getElementById('tabHelp').classList.toggle('hidden', tab.dataset.tab !== 'help');
+  });
+});
+
+// Confirmar carga
+document.getElementById('importConfirmBtn').addEventListener('click', async () => {
+  const raw = document.getElementById('cfgEditor').value.trim();
+  if (!raw) { showToast('El editor está vacío', true); return; }
+
+  const parsed = parseCfg(raw, 'manual-' + Date.now() + '.cfg');
+  if (!parsed) { showToast('Faltan metadatos: name y category son obligatorios', true); return; }
+
+  // Generar nombre de archivo desde el nombre del template
+  const filenameBase = parsed.name
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/g, '');
+  const filename = `${parsed.category.toLowerCase()}-${filenameBase}.cfg`;
+
+  // Guardar en /templates via backend
+  try {
+    const res = await fetch('/api/templates', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ filename, content: raw })
+    });
+    const result = await res.json();
+    if (!res.ok) { showToast(result.error || 'Error al guardar', true); return; }
+  } catch {
+    showToast('No se pudo conectar con el servidor', true);
+    return;
+  }
+
+  templates.push(parsed);
+  document.getElementById('cfgEditor').value = '';
+  document.getElementById('importFilename').textContent = '';
   closeModal('importModal');
   updateCounts();
   renderGrid();
-  showToast(`Template "${name}" importado correctamente`);
+  showToast(`Template "${parsed.name}" guardado en /templates`);
 });
 
 // ─── GENERATE ─────────────────────────────────────────────────────────────────
@@ -72,6 +138,8 @@ document.querySelectorAll('.modal-overlay').forEach(overlay => {
 });
 document.addEventListener('keydown', e => {
   if (e.key === 'Escape') {
+    // No cerrar si el usuario está editando texto
+    if (document.activeElement.tagName === 'TEXTAREA' || document.activeElement.tagName === 'INPUT') return;
     document.querySelectorAll('.modal-overlay.open').forEach(m => closeModal(m.id));
   }
 });
