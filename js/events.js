@@ -143,3 +143,45 @@ document.addEventListener('keydown', e => {
     document.querySelectorAll('.modal-overlay.open').forEach(m => closeModal(m.id));
   }
 });
+
+// ─── EDIT MODAL TABS ──────────────────────────────────────────────────────────
+document.querySelectorAll('[data-edit-tab]').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('[data-edit-tab]').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    document.getElementById('editTabEditor').classList.toggle('hidden', tab.dataset.editTab !== 'editor');
+    document.getElementById('editTabHelp').classList.toggle('hidden', tab.dataset.editTab !== 'help');
+  });
+});
+
+// ─── EDIT SAVE ────────────────────────────────────────────────────────────────
+document.getElementById('editSaveBtn').addEventListener('click', async () => {
+  const raw = document.getElementById('cfgEditEditor').value.trim();
+  if (!raw) { showToast('El editor está vacío', true); return; }
+
+  const filename = document.getElementById('editFilename').textContent;
+  const parsed = parseCfg(raw, filename);
+  if (!parsed) { showToast('Faltan metadatos: name y category son obligatorios', true); return; }
+
+  try {
+    const res = await fetch('/api/templates', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ filename, content: raw })
+    });
+    const result = await res.json();
+    if (!res.ok) { showToast(result.error || 'Error al guardar', true); return; }
+  } catch {
+    showToast('No se pudo conectar con el servidor', true);
+    return;
+  }
+
+  // Actualiza en memoria
+  const idx = templates.findIndex(t => t.id === parsed.id);
+  if (idx !== -1) templates[idx] = parsed;
+
+  closeModal('editModal');
+  updateCounts();
+  renderGrid();
+  showToast(`Template "${parsed.name}" actualizado`);
+});

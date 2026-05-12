@@ -34,23 +34,30 @@ function renderGrid() {
     card.setAttribute('role', 'button');
     card.setAttribute('aria-label', `Usar template: ${t.name}`);
     card.innerHTML = `
-      <div class="card-header">
-        <div class="card-icon">${CATEGORY_ICONS[t.category] || CATEGORY_ICONS['Otros']}</div>
-        <span class="card-badge">${t.category}</span>
-      </div>
-      <div class="card-name">${t.name}</div>
-      <div class="card-desc">${t.description}</div>
-      <div class="card-footer">
-        <div class="card-vars">
-          ${dots}
-          <span style="margin-left:4px">${vars.length} variable${vars.length !== 1 ? 's' : ''}</span>
+    <div class="card-header">
+            <div class="card-icon">${CATEGORY_ICONS[t.category] || CATEGORY_ICONS['Otros']}</div>
+            <span class="card-badge">${t.category}</span>
+            <button class="card-edit-btn" data-id="${t.id}" aria-label="Editar template" title="Editar">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+            </button>
         </div>
-        <span class="card-arrow">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-        </span>
-      </div>`;
+        <div class="card-name">${t.name}</div>
+        <div class="card-desc">${t.description}</div>
+        <div class="card-footer">
+            <div class="card-vars">
+            ${dots}
+            <span style="margin-left:4px">${vars.length} variable${vars.length !== 1 ? 's' : ''}</span>
+            </div>
+            <span class="card-arrow">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+            </span>
+    </div>`;
     card.addEventListener('click', () => openFormModal(t));
     card.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openFormModal(t); } });
+    card.querySelector('.card-edit-btn').addEventListener('click', e => {
+        e.stopPropagation();
+        openEditModal(t);
+    });
     grid.appendChild(card);
   });
 }
@@ -191,3 +198,20 @@ function showToast(msg, isError = false) {
   setTheme(theme);
   if (btn) btn.addEventListener('click', () => setTheme(theme === 'dark' ? 'light' : 'dark'));
 })();
+
+// ─── OPEN EDIT MODAL ──────────────────────────────────────────────────────────
+function openEditModal(template) {
+  const raw = buildRawCfg(template);
+  document.getElementById('editModalSubtitle').textContent = template.id + '.cfg';
+  document.getElementById('editFilename').textContent = template.id + '.cfg';
+  document.getElementById('cfgEditEditor').value = raw;
+  document.getElementById('editTabEditor').classList.remove('hidden');
+  document.getElementById('editTabHelp').classList.add('hidden');
+  document.querySelectorAll('[data-edit-tab]').forEach(t => t.classList.toggle('active', t.dataset.editTab === 'editor'));
+  openModal('editModal');
+  setTimeout(() => document.getElementById('cfgEditEditor').focus(), 220);
+}
+
+function buildRawCfg(template) {
+  return `# name: ${template.name}\n# category: ${template.category}\n# description: ${template.description}\n\n${template.content}`;
+}

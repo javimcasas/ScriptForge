@@ -342,3 +342,24 @@
   font-family: var(--font-mono); margin-right: auto;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 200px;
 }
+
+/* ============================================================
+   EDIT MODAL — EDITOR, HELP
+   ============================================================ */
+.card-edit-btn {
+  margin-left: auto;
+  width: 26px; height: 26px;
+  border-radius: var(--radius-md);
+  display: flex; align-items: center; justify-content: center;
+  color: var(--color-text-faint);
+  opacity: 0;
+  transition: opacity var(--transition-interactive), background var(--transition-interactive), color var(--transition-interactive);
+  flex-shrink: 0;
+}
+.template-card:hover .card-edit-btn {
+  opacity: 1;
+}
+.card-edit-btn:hover {
+  background: var(--color-surface-offset);
+  color: var(--color-text);
+}

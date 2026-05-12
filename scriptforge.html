@@ -274,6 +274,61 @@ interface {INTERFAZ}
   </div>
 </div>
 
+<!-- ============================================================
+     MODAL: EDITAR TEMPLATE
+     ============================================================ -->
+<div class="modal-overlay" id="editModal" role="dialog" aria-modal="true" aria-labelledby="editModalTitle">
+  <div class="modal import-modal">
+    <div class="modal-header">
+      <div class="modal-icon" style="background:var(--color-warning-highlight); color:var(--color-warning)">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+      </div>
+      <div>
+        <div class="modal-title" id="editModalTitle">Editar Template</div>
+        <div class="modal-subtitle" id="editModalSubtitle"></div>
+      </div>
+      <button class="modal-close" onclick="closeModal('editModal')" aria-label="Cerrar">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6L6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+
+    <div class="modal-body">
+      <div class="editor-tabs">
+        <button class="editor-tab active" data-edit-tab="editor">Editor</button>
+        <button class="editor-tab" data-edit-tab="help">Ayuda</button>
+      </div>
+      <div class="editor-panel" id="editTabEditor">
+        <textarea class="import-textarea" id="cfgEditEditor" spellcheck="false"></textarea>
+      </div>
+      <div class="editor-panel hidden" id="editTabHelp">
+        <div class="help-content">
+          <p class="help-title">Formato del archivo .cfg</p>
+          <p class="help-desc">Las primeras líneas son metadatos (empiezan con <code>#</code>). El resto es el script.</p>
+          <pre class="help-example"># name: Nombre visible en la card
+# category: Management
+# description: Descripción breve.
+
+sysname {HOSTNAME}
+!
+interface {INTERFAZ}
+ ip address {IP} {MASCARA}</pre>
+          <p class="help-title">Variables</p>
+          <p class="help-desc">Escribe las variables entre llaves en mayúsculas: <code>{NOMBRE_VARIABLE}</code>.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <span class="import-filename" id="editFilename"></span>
+      <button class="btn-ghost" onclick="closeModal('editModal')">Cancelar</button>
+      <button class="btn-success" id="editSaveBtn">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+        Guardar cambios
+      </button>
+    </div>
+  </div>
+</div>
+
 <!-- TOAST -->
 <div class="toast" id="toast" role="status" aria-live="polite">
   <span class="toast-dot" id="toastDot"></span>
