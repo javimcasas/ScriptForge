@@ -1,0 +1,1203 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ScriptForge — Template Engine</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300..700&family=Geist+Mono:wght@300..500&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   DESIGN TOKENS
+   ============================================================ */
+:root, [data-theme="light"] {
+  --color-bg:             #f7f6f2;
+  --color-surface:        #f9f8f5;
+  --color-surface-2:      #fbfbf9;
+  --color-surface-offset: #f3f0ec;
+  --color-surface-offset-2: #edeae5;
+  --color-surface-dynamic: #e6e4df;
+  --color-divider:        #dcd9d5;
+  --color-border:         #d4d1ca;
+  --color-text:           #28251d;
+  --color-text-muted:     #7a7974;
+  --color-text-faint:     #bab9b4;
+  --color-text-inverse:   #f9f8f4;
+  --color-primary:        #01696f;
+  --color-primary-hover:  #0c4e54;
+  --color-primary-active: #0f3638;
+  --color-primary-highlight: #cedcd8;
+  --color-success:        #437a22;
+  --color-success-hover:  #2e5c10;
+  --color-success-highlight: #d4dfcc;
+  --color-error:          #a12c7b;
+  --color-error-highlight: #e0ced7;
+  --color-warning:        #964219;
+  --color-warning-highlight: #ddcfc6;
+  --color-orange:         #da7101;
+  --color-gold:           #d19900;
+  --color-blue:           #006494;
+  --color-blue-highlight: #c6d8e4;
+  --radius-sm: 0.375rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+  --radius-xl: 1rem;
+  --radius-full: 9999px;
+  --transition-interactive: 180ms cubic-bezier(0.16, 1, 0.3, 1);
+  --shadow-sm: 0 1px 2px oklch(0.2 0.01 80 / 0.06);
+  --shadow-md: 0 4px 12px oklch(0.2 0.01 80 / 0.08);
+  --shadow-lg: 0 12px 32px oklch(0.2 0.01 80 / 0.12);
+  --shadow-xl: 0 24px 64px oklch(0.2 0.01 80 / 0.18);
+  --text-xs:   clamp(0.75rem,  0.7rem  + 0.25vw, 0.875rem);
+  --text-sm:   clamp(0.875rem, 0.8rem  + 0.35vw, 1rem);
+  --text-base: clamp(1rem,     0.95rem + 0.25vw, 1.125rem);
+  --text-lg:   clamp(1.125rem, 1rem    + 0.75vw, 1.5rem);
+  --text-xl:   clamp(1.5rem,   1.2rem  + 1.25vw, 2.25rem);
+  --space-1:  0.25rem; --space-2:  0.5rem;  --space-3:  0.75rem;
+  --space-4:  1rem;    --space-5:  1.25rem; --space-6:  1.5rem;
+  --space-8:  2rem;    --space-10: 2.5rem;  --space-12: 3rem;
+  --space-16: 4rem;    --space-20: 5rem;    --space-24: 6rem;
+  --font-body: 'Geist', 'Inter', sans-serif;
+  --font-mono: 'Geist Mono', 'Fira Code', monospace;
+}
+
+[data-theme="dark"] {
+  --color-bg:             #111110;
+  --color-surface:        #161614;
+  --color-surface-2:      #1a1a18;
+  --color-surface-offset: #1e1d1b;
+  --color-surface-offset-2: #232220;
+  --color-surface-dynamic: #2d2c2a;
+  --color-divider:        #262523;
+  --color-border:         #333230;
+  --color-text:           #e2e0dd;
+  --color-text-muted:     #7a7876;
+  --color-text-faint:     #4a4947;
+  --color-text-inverse:   #1a1918;
+  --color-primary:        #4f98a3;
+  --color-primary-hover:  #227f8b;
+  --color-primary-active: #1a626b;
+  --color-primary-highlight: #1d3538;
+  --color-success:        #6daa45;
+  --color-success-hover:  #4d8f25;
+  --color-success-highlight: #1f2e18;
+  --color-error:          #d163a7;
+  --color-error-highlight: #2e1a27;
+  --color-warning:        #bb653b;
+  --color-warning-highlight: #2e1e14;
+  --color-orange:         #fdab43;
+  --color-gold:           #e8af34;
+  --color-blue:           #5591c7;
+  --color-blue-highlight: #162030;
+  --shadow-sm: 0 1px 2px oklch(0 0 0 / 0.3);
+  --shadow-md: 0 4px 12px oklch(0 0 0 / 0.4);
+  --shadow-lg: 0 12px 32px oklch(0 0 0 / 0.5);
+  --shadow-xl: 0 24px 64px oklch(0 0 0 / 0.6);
+}
+
+/* ============================================================
+   BASE RESET
+   ============================================================ */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; scroll-behavior: smooth; }
+body { min-height: 100dvh; font-family: var(--font-body); font-size: var(--text-sm); color: var(--color-text); background: var(--color-bg); line-height: 1.6; overflow-x: hidden; }
+img, svg { display: block; max-width: 100%; }
+button { cursor: pointer; background: none; border: none; font: inherit; color: inherit; }
+input, textarea, select { font: inherit; color: inherit; }
+::selection { background: oklch(from var(--color-primary) l c h / 0.2); color: var(--color-text); }
+:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 3px; border-radius: var(--radius-sm); }
+
+/* ============================================================
+   LAYOUT — TOP BAR
+   ============================================================ */
+.topbar {
+  position: sticky; top: 0; z-index: 100;
+  height: 52px;
+  background: var(--color-surface);
+  border-bottom: 1px solid var(--color-border);
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 var(--space-6);
+  gap: var(--space-4);
+  backdrop-filter: blur(8px);
+}
+
+.topbar-brand {
+  display: flex; align-items: center; gap: var(--space-3);
+  font-size: var(--text-sm); font-weight: 600; color: var(--color-text);
+  letter-spacing: -0.01em; text-decoration: none;
+  flex-shrink: 0;
+}
+.topbar-brand svg { color: var(--color-primary); }
+
+.topbar-center {
+  flex: 1; max-width: 400px;
+  position: relative;
+}
+.search-input {
+  width: 100%; height: 32px;
+  background: var(--color-surface-offset);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-full);
+  padding: 0 var(--space-4) 0 var(--space-8);
+  font-size: var(--text-xs); color: var(--color-text);
+  transition: border-color var(--transition-interactive), box-shadow var(--transition-interactive);
+}
+.search-input:focus { border-color: var(--color-primary); box-shadow: 0 0 0 3px oklch(from var(--color-primary) l c h / 0.15); outline: none; }
+.search-input::placeholder { color: var(--color-text-faint); }
+.search-icon { position: absolute; left: var(--space-3); top: 50%; transform: translateY(-50%); color: var(--color-text-faint); pointer-events: none; }
+
+.topbar-actions { display: flex; align-items: center; gap: var(--space-2); flex-shrink: 0; }
+
+.btn-icon {
+  width: 32px; height: 32px; border-radius: var(--radius-md);
+  display: flex; align-items: center; justify-content: center;
+  color: var(--color-text-muted);
+  transition: background var(--transition-interactive), color var(--transition-interactive);
+}
+.btn-icon:hover { background: var(--color-surface-offset); color: var(--color-text); }
+
+.btn-primary {
+  height: 32px; padding: 0 var(--space-4);
+  background: var(--color-primary); color: var(--color-text-inverse);
+  border-radius: var(--radius-md); font-size: var(--text-xs); font-weight: 600;
+  display: flex; align-items: center; gap: var(--space-2);
+  transition: background var(--transition-interactive), transform var(--transition-interactive);
+  white-space: nowrap;
+}
+.btn-primary:hover { background: var(--color-primary-hover); }
+.btn-primary:active { transform: scale(0.97); }
+
+/* ============================================================
+   MAIN LAYOUT
+   ============================================================ */
+.app-layout {
+  display: flex; min-height: calc(100dvh - 52px);
+}
+
+/* ============================================================
+   SIDEBAR
+   ============================================================ */
+.sidebar {
+  width: 220px; flex-shrink: 0;
+  background: var(--color-surface);
+  border-right: 1px solid var(--color-border);
+  padding: var(--space-4) 0;
+  display: flex; flex-direction: column; gap: var(--space-1);
+  position: sticky; top: 52px; height: calc(100dvh - 52px);
+  overflow-y: auto;
+}
+
+.sidebar-section-label {
+  padding: var(--space-3) var(--space-4) var(--space-1);
+  font-size: 10px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;
+  color: var(--color-text-faint);
+}
+
+.sidebar-item {
+  display: flex; align-items: center; gap: var(--space-3);
+  padding: var(--space-2) var(--space-4);
+  font-size: var(--text-xs); color: var(--color-text-muted);
+  border-radius: 0; cursor: pointer;
+  transition: background var(--transition-interactive), color var(--transition-interactive);
+  border: none; width: 100%; text-align: left;
+  position: relative;
+}
+.sidebar-item:hover { background: var(--color-surface-offset); color: var(--color-text); }
+.sidebar-item.active { background: var(--color-primary-highlight); color: var(--color-primary); font-weight: 500; }
+.sidebar-item.active::before {
+  content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 2px;
+  background: var(--color-primary); border-radius: 0 2px 2px 0;
+}
+.sidebar-item .count {
+  margin-left: auto; min-width: 18px; height: 18px; padding: 0 var(--space-1);
+  background: var(--color-surface-offset); color: var(--color-text-faint);
+  border-radius: var(--radius-full); font-size: 10px; display: flex; align-items: center; justify-content: center;
+}
+.sidebar-item.active .count { background: oklch(from var(--color-primary) l c h / 0.2); color: var(--color-primary); }
+
+.sidebar-divider { height: 1px; background: var(--color-divider); margin: var(--space-2) var(--space-4); }
+
+/* ============================================================
+   MAIN CONTENT AREA
+   ============================================================ */
+.main-content {
+  flex: 1; min-width: 0;
+  padding: var(--space-8) var(--space-8);
+  display: flex; flex-direction: column; gap: var(--space-6);
+}
+
+.page-header {
+  display: flex; align-items: flex-start; justify-content: space-between; gap: var(--space-4);
+}
+.page-title { font-size: var(--text-xl); font-weight: 700; letter-spacing: -0.02em; color: var(--color-text); }
+.page-subtitle { font-size: var(--text-xs); color: var(--color-text-muted); margin-top: var(--space-1); }
+
+/* ============================================================
+   FILTER BAR
+   ============================================================ */
+.filter-bar { display: flex; align-items: center; gap: var(--space-2); flex-wrap: wrap; }
+.filter-chip {
+  height: 28px; padding: 0 var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-full);
+  font-size: var(--text-xs); color: var(--color-text-muted);
+  background: var(--color-surface-2);
+  cursor: pointer;
+  transition: background var(--transition-interactive), border-color var(--transition-interactive), color var(--transition-interactive);
+  white-space: nowrap;
+}
+.filter-chip:hover { border-color: var(--color-primary); color: var(--color-primary); background: var(--color-primary-highlight); }
+.filter-chip.active { border-color: var(--color-primary); color: var(--color-primary); background: var(--color-primary-highlight); font-weight: 500; }
+
+/* ============================================================
+   TEMPLATE GRID & CARDS
+   ============================================================ */
+.templates-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(280px, 100%), 1fr));
+  gap: var(--space-4);
+}
+
+.template-card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  padding: var(--space-5);
+  cursor: pointer;
+  display: flex; flex-direction: column; gap: var(--space-3);
+  transition: box-shadow var(--transition-interactive), border-color var(--transition-interactive), transform var(--transition-interactive);
+  position: relative; overflow: hidden;
+}
+.template-card::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+  background: var(--card-accent, var(--color-primary));
+  opacity: 0.7;
+}
+.template-card:hover {
+  box-shadow: var(--shadow-lg);
+  border-color: oklch(from var(--color-primary) l c h / 0.4);
+  transform: translateY(-2px);
+}
+.template-card:active { transform: translateY(0); }
+
+.card-header { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--space-2); }
+.card-icon {
+  width: 36px; height: 36px; border-radius: var(--radius-lg);
+  background: var(--card-accent-bg, var(--color-primary-highlight));
+  display: flex; align-items: center; justify-content: center;
+  color: var(--card-accent, var(--color-primary));
+  flex-shrink: 0;
+}
+.card-badge {
+  font-size: 10px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase;
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-full);
+  background: var(--card-accent-bg, var(--color-primary-highlight));
+  color: var(--card-accent, var(--color-primary));
+}
+
+.card-name { font-size: var(--text-sm); font-weight: 600; color: var(--color-text); line-height: 1.3; }
+.card-desc { font-size: var(--text-xs); color: var(--color-text-muted); line-height: 1.5; }
+.card-footer { display: flex; align-items: center; gap: var(--space-2); margin-top: var(--space-1); }
+.card-vars {
+  display: flex; align-items: center; gap: var(--space-1);
+  font-size: 10px; color: var(--color-text-faint);
+}
+.var-dot {
+  width: 5px; height: 5px; border-radius: 50%;
+  background: var(--card-accent, var(--color-primary)); opacity: 0.6;
+}
+.card-arrow { margin-left: auto; color: var(--color-text-faint); opacity: 0; transition: opacity var(--transition-interactive), transform var(--transition-interactive); }
+.template-card:hover .card-arrow { opacity: 1; transform: translateX(3px); }
+
+/* Empty state */
+.empty-state {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  padding: var(--space-24) var(--space-8); gap: var(--space-4);
+  text-align: center; color: var(--color-text-muted);
+  grid-column: 1 / -1;
+}
+.empty-icon { color: var(--color-text-faint); margin-bottom: var(--space-2); }
+.empty-state h3 { font-size: var(--text-base); color: var(--color-text); font-weight: 600; }
+.empty-state p { font-size: var(--text-xs); max-width: 36ch; }
+
+/* ============================================================
+   MODAL OVERLAY
+   ============================================================ */
+.modal-overlay {
+  position: fixed; inset: 0; z-index: 200;
+  background: oklch(0.1 0 0 / 0.6);
+  backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  padding: var(--space-4);
+  opacity: 0; pointer-events: none;
+  transition: opacity 200ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+.modal-overlay.open { opacity: 1; pointer-events: all; }
+
+.modal {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-xl);
+  width: 100%; max-width: 560px;
+  max-height: 90dvh;
+  display: flex; flex-direction: column;
+  transform: translateY(16px) scale(0.98);
+  transition: transform 200ms cubic-bezier(0.16, 1, 0.3, 1);
+  overflow: hidden;
+}
+.modal-overlay.open .modal { transform: translateY(0) scale(1); }
+
+.modal-header {
+  padding: var(--space-5) var(--space-6);
+  border-bottom: 1px solid var(--color-border);
+  display: flex; align-items: center; gap: var(--space-3);
+  flex-shrink: 0;
+}
+.modal-icon {
+  width: 32px; height: 32px; border-radius: var(--radius-md);
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.modal-title { font-size: var(--text-base); font-weight: 700; color: var(--color-text); letter-spacing: -0.01em; }
+.modal-subtitle { font-size: var(--text-xs); color: var(--color-text-muted); }
+.modal-close {
+  margin-left: auto; width: 28px; height: 28px; border-radius: var(--radius-md);
+  display: flex; align-items: center; justify-content: center;
+  color: var(--color-text-faint); flex-shrink: 0;
+  transition: background var(--transition-interactive), color var(--transition-interactive);
+}
+.modal-close:hover { background: var(--color-surface-offset); color: var(--color-text); }
+
+.modal-body { padding: var(--space-6); overflow-y: auto; display: flex; flex-direction: column; gap: var(--space-5); }
+
+.form-field { display: flex; flex-direction: column; gap: var(--space-2); }
+.form-label { font-size: var(--text-xs); font-weight: 600; color: var(--color-text-muted); letter-spacing: 0.02em; display: flex; align-items: center; gap: var(--space-2); }
+.label-required { color: var(--color-error); font-size: 10px; }
+.form-input {
+  height: 36px; padding: 0 var(--space-3);
+  background: var(--color-surface-offset);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  font-size: var(--text-xs); color: var(--color-text);
+  font-family: var(--font-mono);
+  transition: border-color var(--transition-interactive), box-shadow var(--transition-interactive);
+}
+.form-input:focus { border-color: var(--color-primary); box-shadow: 0 0 0 3px oklch(from var(--color-primary) l c h / 0.15); outline: none; }
+.form-input::placeholder { color: var(--color-text-faint); font-family: var(--font-body); }
+.form-hint { font-size: 10px; color: var(--color-text-faint); }
+
+.modal-footer {
+  padding: var(--space-4) var(--space-6);
+  border-top: 1px solid var(--color-border);
+  display: flex; align-items: center; gap: var(--space-3); justify-content: flex-end;
+  flex-shrink: 0;
+}
+.btn-ghost {
+  height: 32px; padding: 0 var(--space-4);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md); font-size: var(--text-xs); font-weight: 500;
+  color: var(--color-text-muted);
+  transition: background var(--transition-interactive), color var(--transition-interactive);
+}
+.btn-ghost:hover { background: var(--color-surface-offset); color: var(--color-text); }
+.btn-success {
+  height: 32px; padding: 0 var(--space-4);
+  background: var(--color-primary); color: var(--color-text-inverse);
+  border-radius: var(--radius-md); font-size: var(--text-xs); font-weight: 600;
+  display: flex; align-items: center; gap: var(--space-2);
+  transition: background var(--transition-interactive);
+}
+.btn-success:hover { background: var(--color-primary-hover); }
+
+/* ============================================================
+   OUTPUT MODAL
+   ============================================================ */
+.output-modal {
+  max-width: 720px;
+}
+.script-output-wrap {
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}
+.script-output-bar {
+  padding: var(--space-2) var(--space-4);
+  background: var(--color-surface-offset);
+  border-bottom: 1px solid var(--color-border);
+  display: flex; align-items: center; justify-content: space-between; gap: var(--space-3);
+}
+.script-output-label { font-size: 10px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--color-text-faint); }
+.script-output-actions { display: flex; gap: var(--space-2); }
+.btn-copy, .btn-download {
+  height: 26px; padding: 0 var(--space-3);
+  border-radius: var(--radius-sm); font-size: 10px; font-weight: 600;
+  display: flex; align-items: center; gap: var(--space-1);
+  transition: background var(--transition-interactive), color var(--transition-interactive);
+}
+.btn-copy { background: var(--color-primary-highlight); color: var(--color-primary); }
+.btn-copy:hover { background: var(--color-primary); color: var(--color-text-inverse); }
+.btn-download { background: var(--color-surface-dynamic); color: var(--color-text-muted); }
+.btn-download:hover { background: var(--color-surface-offset); color: var(--color-text); }
+
+.script-output {
+  padding: var(--space-5);
+  font-family: var(--font-mono); font-size: var(--text-xs);
+  color: var(--color-text); line-height: 1.7;
+  white-space: pre; overflow-x: auto; overflow-y: auto;
+  max-height: 420px;
+  tab-size: 2;
+}
+
+/* Syntax-like coloring */
+.script-output .line-comment { color: var(--color-text-faint); }
+.script-output .line-value { color: var(--color-primary); }
+
+/* ============================================================
+   IMPORT MODAL (TEXTAREA)
+   ============================================================ */
+.import-textarea {
+  width: 100%; min-height: 180px; padding: var(--space-3);
+  background: var(--color-surface-offset);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  font-size: var(--text-xs); color: var(--color-text);
+  font-family: var(--font-mono); line-height: 1.6; resize: vertical;
+  transition: border-color var(--transition-interactive), box-shadow var(--transition-interactive);
+}
+.import-textarea:focus { border-color: var(--color-primary); box-shadow: 0 0 0 3px oklch(from var(--color-primary) l c h / 0.15); outline: none; }
+.import-textarea::placeholder { color: var(--color-text-faint); font-family: var(--font-body); }
+
+.import-name-input {
+  height: 36px; padding: 0 var(--space-3);
+  background: var(--color-surface-offset);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  font-size: var(--text-xs); color: var(--color-text); width: 100%;
+  transition: border-color var(--transition-interactive), box-shadow var(--transition-interactive);
+}
+.import-name-input:focus { border-color: var(--color-primary); box-shadow: 0 0 0 3px oklch(from var(--color-primary) l c h / 0.15); outline: none; }
+
+.category-select {
+  height: 36px; padding: 0 var(--space-3);
+  background: var(--color-surface-offset);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  font-size: var(--text-xs); color: var(--color-text); width: 100%;
+  cursor: pointer;
+  transition: border-color var(--transition-interactive);
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%237a7974' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right var(--space-3) center;
+  padding-right: var(--space-8);
+}
+.category-select:focus { border-color: var(--color-primary); outline: none; }
+
+/* ============================================================
+   TOAST NOTIFICATION
+   ============================================================ */
+.toast {
+  position: fixed; bottom: var(--space-6); right: var(--space-6); z-index: 300;
+  padding: var(--space-3) var(--space-4);
+  background: var(--color-text); color: var(--color-bg);
+  border-radius: var(--radius-lg); font-size: var(--text-xs); font-weight: 500;
+  display: flex; align-items: center; gap: var(--space-2);
+  box-shadow: var(--shadow-xl);
+  transform: translateY(16px); opacity: 0;
+  transition: transform 200ms cubic-bezier(0.16, 1, 0.3, 1), opacity 200ms;
+  pointer-events: none;
+}
+.toast.show { transform: translateY(0); opacity: 1; }
+.toast-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--color-success); flex-shrink: 0; }
+.toast-dot.error { background: var(--color-error); }
+
+/* ============================================================
+   CATEGORY COLOR MAPPING
+   ============================================================ */
+.cat-vlan   { --card-accent: var(--color-blue);    --card-accent-bg: var(--color-blue-highlight); }
+.cat-aaa    { --card-accent: var(--color-orange);  --card-accent-bg: var(--color-warning-highlight); }
+.cat-ntp    { --card-accent: var(--color-gold);    --card-accent-bg: var(--color-success-highlight); }
+.cat-snmp   { --card-accent: var(--color-success); --card-accent-bg: var(--color-success-highlight); }
+.cat-mgmt   { --card-accent: var(--color-primary); --card-accent-bg: var(--color-primary-highlight); }
+.cat-trunk  { --card-accent: var(--color-error);   --card-accent-bg: var(--color-error-highlight); }
+.cat-otros  { --card-accent: var(--color-text-muted); --card-accent-bg: var(--color-surface-offset); }
+
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
+@media (max-width: 768px) {
+  .sidebar { display: none; }
+  .main-content { padding: var(--space-5) var(--space-4); }
+  .topbar { padding: 0 var(--space-4); }
+  .topbar-center { display: none; }
+}
+
+/* ============================================================
+   IMPORT SECTION TIPS
+   ============================================================ */
+.info-box {
+  padding: var(--space-3) var(--space-4);
+  background: var(--color-primary-highlight);
+  border-radius: var(--radius-md);
+  border-left: 3px solid var(--color-primary);
+  font-size: var(--text-xs); color: var(--color-text-muted); line-height: 1.6;
+}
+.info-box code {
+  font-family: var(--font-mono); color: var(--color-primary);
+  background: oklch(from var(--color-primary) l c h / 0.1);
+  padding: 0 4px; border-radius: 3px;
+}
+
+/* Highlighted var in output */
+.var-highlight { color: var(--color-orange); font-weight: 600; }
+</style>
+</head>
+<body>
+
+<!-- ============================================================
+     TOP BAR
+     ============================================================ -->
+<header class="topbar">
+  <a href="#" class="topbar-brand">
+    <!-- SVG Logo -->
+    <svg width="22" height="22" viewBox="0 0 22 22" fill="none" aria-label="ScriptForge">
+      <rect x="1" y="1" width="20" height="20" rx="5" stroke="currentColor" stroke-width="1.5"/>
+      <path d="M6 8l3 3-3 3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M12 14h4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+    </svg>
+    ScriptForge
+  </a>
+
+  <div class="topbar-center">
+    <svg class="search-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+    <input type="text" class="search-input" placeholder="Buscar templates…" id="globalSearch">
+  </div>
+
+  <div class="topbar-actions">
+    <button class="btn-icon" data-theme-toggle aria-label="Cambiar tema" title="Cambiar tema">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+    </button>
+    <button class="btn-primary" id="importBtn">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12l7 7 7-7"/></svg>
+      Importar Template
+    </button>
+  </div>
+</header>
+
+<!-- ============================================================
+     APP LAYOUT
+     ============================================================ -->
+<div class="app-layout">
+
+  <!-- SIDEBAR -->
+  <nav class="sidebar" id="sidebar">
+    <span class="sidebar-section-label">Vistas</span>
+    <button class="sidebar-item active" data-filter="all">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+      Todos los templates
+      <span class="count" id="count-all">0</span>
+    </button>
+
+    <div class="sidebar-divider"></div>
+    <span class="sidebar-section-label">Categorías</span>
+
+    <button class="sidebar-item" data-filter="VLAN">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
+      VLAN
+      <span class="count" id="count-VLAN">0</span>
+    </button>
+    <button class="sidebar-item" data-filter="AAA">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+      AAA
+      <span class="count" id="count-AAA">0</span>
+    </button>
+    <button class="sidebar-item" data-filter="NTP">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+      NTP
+      <span class="count" id="count-NTP">0</span>
+    </button>
+    <button class="sidebar-item" data-filter="SNMP">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>
+      SNMP
+      <span class="count" id="count-SNMP">0</span>
+    </button>
+    <button class="sidebar-item" data-filter="Management">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93A10 10 0 0 0 4.93 19.07M19.07 4.93A10 10 0 0 1 4.93 19.07"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/></svg>
+      Management
+      <span class="count" id="count-Management">0</span>
+    </button>
+    <button class="sidebar-item" data-filter="Trunks">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>
+      Trunks
+      <span class="count" id="count-Trunks">0</span>
+    </button>
+    <button class="sidebar-item" data-filter="Otros">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg>
+      Otros
+      <span class="count" id="count-Otros">0</span>
+    </button>
+  </nav>
+
+  <!-- MAIN CONTENT -->
+  <main class="main-content">
+    <div class="page-header">
+      <div>
+        <h1 class="page-title" id="pageTitle">Todos los templates</h1>
+        <p class="page-subtitle" id="pageSubtitle">Selecciona un template para generar el script de configuración</p>
+      </div>
+    </div>
+
+    <!-- FILTER CHIPS -->
+    <div class="filter-bar" id="filterBar">
+      <button class="filter-chip active" data-filter="all">Todos</button>
+      <button class="filter-chip" data-filter="VLAN">VLAN</button>
+      <button class="filter-chip" data-filter="AAA">AAA</button>
+      <button class="filter-chip" data-filter="NTP">NTP</button>
+      <button class="filter-chip" data-filter="SNMP">SNMP</button>
+      <button class="filter-chip" data-filter="Management">Management</button>
+      <button class="filter-chip" data-filter="Trunks">Trunks</button>
+      <button class="filter-chip" data-filter="Otros">Otros</button>
+    </div>
+
+    <!-- TEMPLATE GRID -->
+    <div class="templates-grid" id="templatesGrid">
+      <!-- Cards injected by JS -->
+    </div>
+  </main>
+</div>
+
+<!-- ============================================================
+     MODAL: FORMULARIO DE VARIABLES
+     ============================================================ -->
+<div class="modal-overlay" id="formModal" role="dialog" aria-modal="true" aria-labelledby="formModalTitle">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-icon" id="formModalIcon"></div>
+      <div>
+        <div class="modal-title" id="formModalTitle">Template</div>
+        <div class="modal-subtitle" id="formModalSubtitle"></div>
+      </div>
+      <button class="modal-close" onclick="closeModal('formModal')" aria-label="Cerrar">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6L6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div class="modal-body" id="formModalBody">
+      <!-- Fields injected by JS -->
+    </div>
+    <div class="modal-footer">
+      <button class="btn-ghost" onclick="closeModal('formModal')">Cancelar</button>
+      <button class="btn-success" id="generateBtn">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+        Generar Script
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     MODAL: OUTPUT SCRIPT
+     ============================================================ -->
+<div class="modal-overlay" id="outputModal" role="dialog" aria-modal="true" aria-labelledby="outputModalTitle">
+  <div class="modal output-modal">
+    <div class="modal-header">
+      <div class="modal-icon" style="background:var(--color-success-highlight); color:var(--color-success)">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+      </div>
+      <div>
+        <div class="modal-title" id="outputModalTitle">Script generado</div>
+        <div class="modal-subtitle">Listo para copiar y pegar en el dispositivo</div>
+      </div>
+      <button class="modal-close" onclick="closeModal('outputModal')" aria-label="Cerrar">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6L6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div class="script-output-wrap">
+        <div class="script-output-bar">
+          <span class="script-output-label">Script de configuración</span>
+          <div class="script-output-actions">
+            <button class="btn-copy" id="copyBtn">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+              Copiar
+            </button>
+            <button class="btn-download" id="downloadBtn">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              Descargar .txt
+            </button>
+          </div>
+        </div>
+        <pre class="script-output" id="scriptOutput"></pre>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-ghost" onclick="closeModal('outputModal'); openModal('formModal')">← Volver al formulario</button>
+      <button class="btn-ghost" onclick="closeModal('outputModal')">Cerrar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     MODAL: IMPORTAR TEMPLATE
+     ============================================================ -->
+<div class="modal-overlay" id="importModal" role="dialog" aria-modal="true" aria-labelledby="importModalTitle">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-icon" style="background:var(--color-primary-highlight); color:var(--color-primary)">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12l7 7 7-7"/></svg>
+      </div>
+      <div>
+        <div class="modal-title" id="importModalTitle">Importar Template</div>
+        <div class="modal-subtitle">Pega el contenido del script con variables entre llaves</div>
+      </div>
+      <button class="modal-close" onclick="closeModal('importModal')" aria-label="Cerrar">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6L6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div class="info-box">
+        Usa <code>{VARIABLE}</code> para marcar las variables. Ejemplo: <code>ip address {IP_MGMT} {MASCARA}</code>. La misma variable solo se pedirá una vez.
+      </div>
+      <div class="form-field">
+        <label class="form-label" for="importName">Nombre del template <span class="label-required">*</span></label>
+        <input type="text" class="import-name-input" id="importName" placeholder="Ej: Configuración de VLAN de gestión">
+      </div>
+      <div class="form-field">
+        <label class="form-label" for="importDesc">Descripción breve</label>
+        <input type="text" class="import-name-input" id="importDesc" placeholder="Ej: Configura interfaz de gestión con VLAN dedicada">
+      </div>
+      <div class="form-field">
+        <label class="form-label" for="importCategory">Categoría <span class="label-required">*</span></label>
+        <select class="category-select" id="importCategory">
+          <option value="Management">Management</option>
+          <option value="VLAN">VLAN</option>
+          <option value="AAA">AAA</option>
+          <option value="NTP">NTP</option>
+          <option value="SNMP">SNMP</option>
+          <option value="Trunks">Trunks</option>
+          <option value="Otros">Otros</option>
+        </select>
+      </div>
+      <div class="form-field">
+        <label class="form-label" for="importContent">Contenido del script <span class="label-required">*</span></label>
+        <textarea class="import-textarea" id="importContent" placeholder="interface {INTERFAZ}
+ ip address {IP_MGMT} {MASCARA}
+ description {DESCRIPCION}
+ no shutdown"></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-ghost" onclick="closeModal('importModal')">Cancelar</button>
+      <button class="btn-success" id="saveImportBtn">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+        Guardar Template
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast" role="status" aria-live="polite">
+  <span class="toast-dot" id="toastDot"></span>
+  <span id="toastMsg"></span>
+</div>
+
+<!-- ============================================================
+     JAVASCRIPT
+     ============================================================ -->
+<script>
+// ─── CATEGORY ICON MAP ──────────────────────────────────────────────────────
+const CATEGORY_ICONS = {
+  VLAN: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>`,
+  AAA: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>`,
+  NTP: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>`,
+  SNMP: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>`,
+  Management: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/></svg>`,
+  Trunks: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>`,
+  Otros: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg>`,
+};
+
+const CATEGORY_CSS = {
+  VLAN: 'cat-vlan', AAA: 'cat-aaa', NTP: 'cat-ntp',
+  SNMP: 'cat-snmp', Management: 'cat-mgmt', Trunks: 'cat-trunk', Otros: 'cat-otros'
+};
+
+// ─── DEFAULT TEMPLATES ───────────────────────────────────────────────────────
+const DEFAULT_TEMPLATES = [
+  {
+    id: 't1', name: 'IP de Gestión', category: 'Management',
+    description: 'Configura la interfaz de gestión con dirección IP estática y ruta por defecto.',
+    content: `interface {INTERFAZ}
+ ip address {IP_MGMT} {MASCARA}
+ description Management - {HOSTNAME}
+ no shutdown
+!
+ip default-gateway {GATEWAY}
+!
+ip domain-name {DOMAIN}`
+  },
+  {
+    id: 't2', name: 'Configuración NTP', category: 'NTP',
+    description: 'Sincronización horaria con servidor NTP primario y zona horaria.',
+    content: `clock timezone {TIMEZONE} {OFFSET}
+!
+ntp server {NTP_SERVER_1}
+ntp server {NTP_SERVER_2} prefer
+ntp update-calendar
+!
+service timestamps log datetime msec localtime`
+  },
+  {
+    id: 't3', name: 'VLAN y Acceso', category: 'VLAN',
+    description: 'Crea una VLAN y configura el puerto de acceso asociado.',
+    content: `vlan {VLAN_ID}
+ name {VLAN_NAME}
+!
+interface {INTERFAZ}
+ switchport mode access
+ switchport access vlan {VLAN_ID}
+ description {DESCRIPCION}
+ spanning-tree portfast
+ no shutdown`
+  },
+  {
+    id: 't4', name: 'Trunk 802.1Q', category: 'Trunks',
+    description: 'Configura un trunk 802.1Q con VLANs permitidas entre switches.',
+    content: `interface {INTERFAZ}
+ switchport trunk encapsulation dot1q
+ switchport mode trunk
+ switchport trunk allowed vlan {VLANS_PERMITIDAS}
+ switchport trunk native vlan {NATIVE_VLAN}
+ description Trunk to {VECINO}
+ no shutdown`
+  },
+  {
+    id: 't5', name: 'AAA con TACACS+', category: 'AAA',
+    description: 'Autenticación y autorización centralizada con servidor TACACS+.',
+    content: `aaa new-model
+!
+tacacs server {TACACS_SERVER_NAME}
+ address ipv4 {TACACS_IP}
+ key {TACACS_KEY}
+!
+aaa authentication login default group tacacs+ local
+aaa authorization exec default group tacacs+ local
+aaa accounting exec default start-stop group tacacs+
+!
+username {LOCAL_USER} privilege 15 secret {LOCAL_PASS}
+!
+line vty 0 15
+ login authentication default
+ transport input ssh`
+  },
+  {
+    id: 't6', name: 'SNMP v3', category: 'SNMP',
+    description: 'Configuración de SNMP versión 3 con autenticación y privacidad.',
+    content: `snmp-server group {SNMP_GROUP} v3 priv
+snmp-server user {SNMP_USER} {SNMP_GROUP} v3 auth sha {AUTH_PASS} priv aes 128 {PRIV_PASS}
+snmp-server host {NMS_IP} version 3 priv {SNMP_USER}
+snmp-server location {UBICACION}
+snmp-server contact {CONTACTO}
+snmp-server enable traps`
+  },
+];
+
+// ─── APP STATE ────────────────────────────────────────────────────────────────
+let templates = [...DEFAULT_TEMPLATES];
+let currentFilter = 'all';
+let currentTemplate = null;
+let searchQuery = '';
+
+// ─── RENDER GRID ─────────────────────────────────────────────────────────────
+function renderGrid() {
+  const grid = document.getElementById('templatesGrid');
+  let filtered = templates;
+  if (currentFilter !== 'all') filtered = filtered.filter(t => t.category === currentFilter);
+  if (searchQuery) {
+    const q = searchQuery.toLowerCase();
+    filtered = filtered.filter(t =>
+      t.name.toLowerCase().includes(q) ||
+      t.description.toLowerCase().includes(q) ||
+      t.category.toLowerCase().includes(q)
+    );
+  }
+
+  grid.innerHTML = '';
+
+  if (filtered.length === 0) {
+    grid.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-icon"><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg></div>
+        <h3>Sin templates</h3>
+        <p>Importa un nuevo template usando el botón "Importar Template".</p>
+      </div>`;
+    return;
+  }
+
+  filtered.forEach(t => {
+    const catClass = CATEGORY_CSS[t.category] || 'cat-otros';
+    const vars = extractVars(t.content);
+    const dots = vars.slice(0, 5).map(() => '<span class="var-dot"></span>').join('');
+    const card = document.createElement('div');
+    card.className = `template-card ${catClass}`;
+    card.setAttribute('tabindex', '0');
+    card.setAttribute('role', 'button');
+    card.setAttribute('aria-label', `Usar template: ${t.name}`);
+    card.innerHTML = `
+      <div class="card-header">
+        <div class="card-icon">${CATEGORY_ICONS[t.category] || CATEGORY_ICONS['Otros']}</div>
+        <span class="card-badge">${t.category}</span>
+      </div>
+      <div class="card-name">${t.name}</div>
+      <div class="card-desc">${t.description}</div>
+      <div class="card-footer">
+        <div class="card-vars">
+          ${dots}
+          <span style="margin-left:4px">${vars.length} variable${vars.length !== 1 ? 's' : ''}</span>
+        </div>
+        <span class="card-arrow">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+        </span>
+      </div>`;
+    card.addEventListener('click', () => openFormModal(t));
+    card.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openFormModal(t); } });
+    grid.appendChild(card);
+  });
+}
+
+// ─── EXTRACT VARIABLES ────────────────────────────────────────────────────────
+function extractVars(content) {
+  const matches = content.match(/\{([A-Z0-9_]+)\}/g) || [];
+  return [...new Set(matches.map(m => m.slice(1, -1)))];
+}
+
+// ─── OPEN FORM MODAL ─────────────────────────────────────────────────────────
+function openFormModal(template) {
+  currentTemplate = template;
+  const vars = extractVars(template.content);
+  const catClass = CATEGORY_CSS[template.category] || 'cat-otros';
+
+  document.getElementById('formModalTitle').textContent = template.name;
+  document.getElementById('formModalSubtitle').textContent = template.description;
+
+  const iconEl = document.getElementById('formModalIcon');
+  iconEl.innerHTML = CATEGORY_ICONS[template.category] || CATEGORY_ICONS['Otros'];
+  iconEl.className = `modal-icon ${catClass}`;
+
+  const body = document.getElementById('formModalBody');
+  body.innerHTML = '';
+
+  if (vars.length === 0) {
+    body.innerHTML = '<p style="font-size:var(--text-xs);color:var(--color-text-muted);">Este template no tiene variables. El script se generará tal cual.</p>';
+  } else {
+    vars.forEach(v => {
+      const field = document.createElement('div');
+      field.className = 'form-field';
+      field.innerHTML = `
+        <label class="form-label" for="var_${v}">
+          ${v.replace(/_/g, ' ')} <span class="label-required">*</span>
+        </label>
+        <input type="text" class="form-input" id="var_${v}" data-var="${v}" placeholder="${v}" autocomplete="off" spellcheck="false">`;
+      body.appendChild(field);
+    });
+  }
+
+  document.getElementById('outputModalTitle').textContent = `Script — ${template.name}`;
+  openModal('formModal');
+
+  // Focus first input
+  setTimeout(() => {
+    const first = body.querySelector('.form-input');
+    if (first) first.focus();
+  }, 220);
+}
+
+// ─── GENERATE SCRIPT ─────────────────────────────────────────────────────────
+function generateScript() {
+  if (!currentTemplate) return;
+  const vars = extractVars(currentTemplate.content);
+  const values = {};
+  let valid = true;
+
+  vars.forEach(v => {
+    const el = document.getElementById(`var_${v}`);
+    const val = el ? el.value.trim() : '';
+    if (!val) {
+      valid = false;
+      if (el) { el.style.borderColor = 'var(--color-error)'; el.focus(); }
+    } else {
+      if (el) el.style.borderColor = '';
+      values[v] = val;
+    }
+  });
+
+  if (!valid) { showToast('Completa todos los campos requeridos', true); return; }
+
+  let script = currentTemplate.content;
+  vars.forEach(v => {
+    script = script.split(`{${v}}`).join(values[v]);
+  });
+
+  document.getElementById('scriptOutput').textContent = script;
+  closeModal('formModal');
+  openModal('outputModal');
+}
+
+// ─── COPY / DOWNLOAD ─────────────────────────────────────────────────────────
+document.getElementById('copyBtn').addEventListener('click', () => {
+  const text = document.getElementById('scriptOutput').textContent;
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(text).then(() => showToast('Script copiado al portapapeles'));
+  } else {
+    const ta = document.createElement('textarea');
+    ta.value = text; document.body.appendChild(ta); ta.select();
+    document.execCommand('copy'); document.body.removeChild(ta);
+    showToast('Script copiado al portapapeles');
+  }
+});
+
+document.getElementById('downloadBtn').addEventListener('click', () => {
+  const text = document.getElementById('scriptOutput').textContent;
+  const name = (currentTemplate ? currentTemplate.name.replace(/[^a-z0-9]/gi, '_').toLowerCase() : 'script') + '.txt';
+  const blob = new Blob([text], { type: 'text/plain' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = name; a.click();
+  URL.revokeObjectURL(url);
+  showToast('Archivo descargado');
+});
+
+// ─── IMPORT TEMPLATE ─────────────────────────────────────────────────────────
+document.getElementById('importBtn').addEventListener('click', () => { openModal('importModal'); });
+
+document.getElementById('saveImportBtn').addEventListener('click', () => {
+  const name = document.getElementById('importName').value.trim();
+  const desc = document.getElementById('importDesc').value.trim();
+  const category = document.getElementById('importCategory').value;
+  const content = document.getElementById('importContent').value.trim();
+
+  if (!name) { showToast('El nombre es obligatorio', true); return; }
+  if (!content) { showToast('El contenido del script es obligatorio', true); return; }
+
+  const newTemplate = {
+    id: 't' + Date.now(),
+    name, description: desc || 'Sin descripción', category, content
+  };
+  templates.push(newTemplate);
+
+  document.getElementById('importName').value = '';
+  document.getElementById('importDesc').value = '';
+  document.getElementById('importContent').value = '';
+
+  closeModal('importModal');
+  updateCounts();
+  renderGrid();
+  showToast(`Template "${name}" importado correctamente`);
+});
+
+// ─── MODAL HELPERS ────────────────────────────────────────────────────────────
+function openModal(id) {
+  document.getElementById(id).classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+function closeModal(id) {
+  document.getElementById(id).classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+// Close on overlay click
+document.querySelectorAll('.modal-overlay').forEach(overlay => {
+  overlay.addEventListener('click', e => {
+    if (e.target === overlay) closeModal(overlay.id);
+  });
+});
+
+// Close on Escape
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') {
+    document.querySelectorAll('.modal-overlay.open').forEach(m => closeModal(m.id));
+  }
+});
+
+// Generate on Enter in form fields
+document.getElementById('formModalBody').addEventListener('keydown', e => {
+  if (e.key === 'Enter') generateScript();
+});
+
+document.getElementById('generateBtn').addEventListener('click', generateScript);
+
+// ─── FILTER LOGIC ─────────────────────────────────────────────────────────────
+function setFilter(filter) {
+  currentFilter = filter;
+
+  // sidebar
+  document.querySelectorAll('.sidebar-item[data-filter]').forEach(item => {
+    item.classList.toggle('active', item.dataset.filter === filter);
+  });
+  // chips
+  document.querySelectorAll('.filter-chip').forEach(chip => {
+    chip.classList.toggle('active', chip.dataset.filter === filter);
+  });
+
+  const titles = { all: 'Todos los templates', VLAN: 'VLAN', AAA: 'AAA', NTP: 'NTP', SNMP: 'SNMP', Management: 'Management', Trunks: 'Trunks', Otros: 'Otros' };
+  document.getElementById('pageTitle').textContent = titles[filter] || filter;
+  renderGrid();
+}
+
+document.querySelectorAll('[data-filter]').forEach(el => {
+  el.addEventListener('click', () => setFilter(el.dataset.filter));
+});
+
+// ─── SEARCH ────────────────────────────────────────────────────────────────────
+document.getElementById('globalSearch').addEventListener('input', e => {
+  searchQuery = e.target.value.trim();
+  renderGrid();
+});
+
+// ─── COUNTS ────────────────────────────────────────────────────────────────────
+function updateCounts() {
+  const cats = ['all', 'VLAN', 'AAA', 'NTP', 'SNMP', 'Management', 'Trunks', 'Otros'];
+  cats.forEach(c => {
+    const el = document.getElementById('count-' + c);
+    if (el) el.textContent = c === 'all' ? templates.length : templates.filter(t => t.category === c).length;
+  });
+}
+
+// ─── TOAST ────────────────────────────────────────────────────────────────────
+function showToast(msg, isError = false) {
+  const toast = document.getElementById('toast');
+  const dot = document.getElementById('toastDot');
+  document.getElementById('toastMsg').textContent = msg;
+  dot.className = 'toast-dot' + (isError ? ' error' : '');
+  toast.classList.add('show');
+  setTimeout(() => toast.classList.remove('show'), 2800);
+}
+
+// ─── THEME TOGGLE ─────────────────────────────────────────────────────────────
+(function(){
+  const btn = document.querySelector('[data-theme-toggle]');
+  const root = document.documentElement;
+  let theme = root.getAttribute('data-theme') || 'dark';
+  function setTheme(t) {
+    theme = t;
+    root.setAttribute('data-theme', t);
+    if (btn) {
+      btn.setAttribute('aria-label', 'Cambiar a modo ' + (t === 'dark' ? 'claro' : 'oscuro'));
+      btn.innerHTML = t === 'dark'
+        ? '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>'
+        : '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>';
+    }
+  }
+  setTheme(theme);
+  if (btn) btn.addEventListener('click', () => setTheme(theme === 'dark' ? 'light' : 'dark'));
+})();
+
+// ─── INIT ──────────────────────────────────────────────────────────────────────
+updateCounts();
+renderGrid();
+</script>
+</body>
+</html>

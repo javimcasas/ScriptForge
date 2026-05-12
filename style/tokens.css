@@ -1,0 +1,87 @@
+/* ============================================================
+   DESIGN TOKENS
+   ============================================================ */
+:root, [data-theme="light"] {
+  --color-bg:             #f7f6f2;
+  --color-surface:        #f9f8f5;
+  --color-surface-2:      #fbfbf9;
+  --color-surface-offset: #f3f0ec;
+  --color-surface-offset-2: #edeae5;
+  --color-surface-dynamic: #e6e4df;
+  --color-divider:        #dcd9d5;
+  --color-border:         #d4d1ca;
+  --color-text:           #28251d;
+  --color-text-muted:     #7a7974;
+  --color-text-faint:     #bab9b4;
+  --color-text-inverse:   #f9f8f4;
+  --color-primary:        #01696f;
+  --color-primary-hover:  #0c4e54;
+  --color-primary-active: #0f3638;
+  --color-primary-highlight: #cedcd8;
+  --color-success:        #437a22;
+  --color-success-hover:  #2e5c10;
+  --color-success-highlight: #d4dfcc;
+  --color-error:          #a12c7b;
+  --color-error-highlight: #e0ced7;
+  --color-warning:        #964219;
+  --color-warning-highlight: #ddcfc6;
+  --color-orange:         #da7101;
+  --color-gold:           #d19900;
+  --color-blue:           #006494;
+  --color-blue-highlight: #c6d8e4;
+  --radius-sm: 0.375rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+  --radius-xl: 1rem;
+  --radius-full: 9999px;
+  --transition-interactive: 180ms cubic-bezier(0.16, 1, 0.3, 1);
+  --shadow-sm: 0 1px 2px oklch(0.2 0.01 80 / 0.06);
+  --shadow-md: 0 4px 12px oklch(0.2 0.01 80 / 0.08);
+  --shadow-lg: 0 12px 32px oklch(0.2 0.01 80 / 0.12);
+  --shadow-xl: 0 24px 64px oklch(0.2 0.01 80 / 0.18);
+  --text-xs:   clamp(0.75rem,  0.7rem  + 0.25vw, 0.875rem);
+  --text-sm:   clamp(0.875rem, 0.8rem  + 0.35vw, 1rem);
+  --text-base: clamp(1rem,     0.95rem + 0.25vw, 1.125rem);
+  --text-lg:   clamp(1.125rem, 1rem    + 0.75vw, 1.5rem);
+  --text-xl:   clamp(1.5rem,   1.2rem  + 1.25vw, 2.25rem);
+  --space-1:  0.25rem; --space-2:  0.5rem;  --space-3:  0.75rem;
+  --space-4:  1rem;    --space-5:  1.25rem; --space-6:  1.5rem;
+  --space-8:  2rem;    --space-10: 2.5rem;  --space-12: 3rem;
+  --space-16: 4rem;    --space-20: 5rem;    --space-24: 6rem;
+  --font-body: 'Geist', 'Inter', sans-serif;
+  --font-mono: 'Geist Mono', 'Fira Code', monospace;
+}
+
+[data-theme="dark"] {
+  --color-bg:             #111110;
+  --color-surface:        #161614;
+  --color-surface-2:      #1a1a18;
+  --color-surface-offset: #1e1d1b;
+  --color-surface-offset-2: #232220;
+  --color-surface-dynamic: #2d2c2a;
+  --color-divider:        #262523;
+  --color-border:         #333230;
+  --color-text:           #e2e0dd;
+  --color-text-muted:     #7a7876;
+  --color-text-faint:     #4a4947;
+  --color-text-inverse:   #1a1918;
+  --color-primary:        #4f98a3;
+  --color-primary-hover:  #227f8b;
+  --color-primary-active: #1a626b;
+  --color-primary-highlight: #1d3538;
+  --color-success:        #6daa45;
+  --color-success-hover:  #4d8f25;
+  --color-success-highlight: #1f2e18;
+  --color-error:          #d163a7;
+  --color-error-highlight: #2e1a27;
+  --color-warning:        #bb653b;
+  --color-warning-highlight: #2e1e14;
+  --color-orange:         #fdab43;
+  --color-gold:           #e8af34;
+  --color-blue:           #5591c7;
+  --color-blue-highlight: #162030;
+  --shadow-sm: 0 1px 2px oklch(0 0 0 / 0.3);
+  --shadow-md: 0 4px 12px oklch(0 0 0 / 0.4);
+  --shadow-lg: 0 12px 32px oklch(0 0 0 / 0.5);
+  --shadow-xl: 0 24px 64px oklch(0 0 0 / 0.6);
+}

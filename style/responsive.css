@@ -1,0 +1,28 @@
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
+@media (max-width: 768px) {
+  .sidebar { display: none; }
+  .main-content { padding: var(--space-5) var(--space-4); }
+  .topbar { padding: 0 var(--space-4); }
+  .topbar-center { display: none; }
+}
+
+/* ============================================================
+   IMPORT SECTION TIPS
+   ============================================================ */
+.info-box {
+  padding: var(--space-3) var(--space-4);
+  background: var(--color-primary-highlight);
+  border-radius: var(--radius-md);
+  border-left: 3px solid var(--color-primary);
+  font-size: var(--text-xs); color: var(--color-text-muted); line-height: 1.6;
+}
+.info-box code {
+  font-family: var(--font-mono); color: var(--color-primary);
+  background: oklch(from var(--color-primary) l c h / 0.1);
+  padding: 0 4px; border-radius: 3px;
+}
+
+/* Highlighted var in output */
+.var-highlight { color: var(--color-orange); font-weight: 600; }

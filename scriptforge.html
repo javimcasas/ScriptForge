@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ScriptForge — Template Engine</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300..700&family=Geist+Mono:wght@300..500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="./style/scriptforge.css">
+</head>
+<body>
+
+<!-- ============================================================
+     TOP BAR
+     ============================================================ -->
+<header class="topbar">
+  <a href="#" class="topbar-brand">
+    <!-- SVG Logo -->
+    <svg width="22" height="22" viewBox="0 0 22 22" fill="none" aria-label="ScriptForge">
+      <rect x="1" y="1" width="20" height="20" rx="5" stroke="currentColor" stroke-width="1.5"/>
+      <path d="M6 8l3 3-3 3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M12 14h4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+    </svg>
+    ScriptForge
+  </a>
+
+  <div class="topbar-center">
+    <svg class="search-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+    <input type="text" class="search-input" placeholder="Buscar templates…" id="globalSearch">
+  </div>
+
+  <div class="topbar-actions">
+    <button class="btn-icon" data-theme-toggle aria-label="Cambiar tema" title="Cambiar tema">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+    </button>
+    <button class="btn-primary" id="importBtn">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12l7 7 7-7"/></svg>
+      Importar Template
+    </button>
+  </div>
+</header>
+
+<!-- ============================================================
+     APP LAYOUT
+     ============================================================ -->
+<div class="app-layout">
+
+  <!-- SIDEBAR -->
+  <nav class="sidebar" id="sidebar">
+    <span class="sidebar-section-label">Vistas</span>
+    <button class="sidebar-item active" data-filter="all">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+      Todos los templates
+      <span class="count" id="count-all">0</span>
+    </button>
+
+    <div class="sidebar-divider"></div>
+    <span class="sidebar-section-label">Categorías</span>
+
+    <button class="sidebar-item" data-filter="VLAN">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
+      VLAN
+      <span class="count" id="count-VLAN">0</span>
+    </button>
+    <button class="sidebar-item" data-filter="AAA">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+      AAA
+      <span class="count" id="count-AAA">0</span>
+    </button>
+    <button class="sidebar-item" data-filter="NTP">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+      NTP
+      <span class="count" id="count-NTP">0</span>
+    </button>
+    <button class="sidebar-item" data-filter="SNMP">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>
+      SNMP
+      <span class="count" id="count-SNMP">0</span>
+    </button>
+    <button class="sidebar-item" data-filter="Management">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93A10 10 0 0 0 4.93 19.07M19.07 4.93A10 10 0 0 1 4.93 19.07"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/></svg>
+      Management
+      <span class="count" id="count-Management">0</span>
+    </button>
+    <button class="sidebar-item" data-filter="Trunks">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>
+      Trunks
+      <span class="count" id="count-Trunks">0</span>
+    </button>
+    <button class="sidebar-item" data-filter="Otros">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg>
+      Otros
+      <span class="count" id="count-Otros">0</span>
+    </button>
+  </nav>
+
+  <!-- MAIN CONTENT -->
+  <main class="main-content">
+    <div class="page-header">
+      <div>
+        <h1 class="page-title" id="pageTitle">Todos los templates</h1>
+        <p class="page-subtitle" id="pageSubtitle">Selecciona un template para generar el script de configuración</p>
+      </div>
+    </div>
+
+    <!-- FILTER CHIPS -->
+    <div class="filter-bar" id="filterBar">
+      <button class="filter-chip active" data-filter="all">Todos</button>
+      <button class="filter-chip" data-filter="VLAN">VLAN</button>
+      <button class="filter-chip" data-filter="AAA">AAA</button>
+      <button class="filter-chip" data-filter="NTP">NTP</button>
+      <button class="filter-chip" data-filter="SNMP">SNMP</button>
+      <button class="filter-chip" data-filter="Management">Management</button>
+      <button class="filter-chip" data-filter="Trunks">Trunks</button>
+      <button class="filter-chip" data-filter="Otros">Otros</button>
+    </div>
+
+    <!-- TEMPLATE GRID -->
+    <div class="templates-grid" id="templatesGrid">
+      <!-- Cards injected by JS -->
+    </div>
+  </main>
+</div>
+
+<!-- ============================================================
+     MODAL: FORMULARIO DE VARIABLES
+     ============================================================ -->
+<div class="modal-overlay" id="formModal" role="dialog" aria-modal="true" aria-labelledby="formModalTitle">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-icon" id="formModalIcon"></div>
+      <div>
+        <div class="modal-title" id="formModalTitle">Template</div>
+        <div class="modal-subtitle" id="formModalSubtitle"></div>
+      </div>
+      <button class="modal-close" onclick="closeModal('formModal')" aria-label="Cerrar">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6L6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div class="modal-body" id="formModalBody">
+      <!-- Fields injected by JS -->
+    </div>
+    <div class="modal-footer">
+      <button class="btn-ghost" onclick="closeModal('formModal')">Cancelar</button>
+      <button class="btn-success" id="generateBtn">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+        Generar Script
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     MODAL: OUTPUT SCRIPT
+     ============================================================ -->
+<div class="modal-overlay" id="outputModal" role="dialog" aria-modal="true" aria-labelledby="outputModalTitle">
+  <div class="modal output-modal">
+    <div class="modal-header">
+      <div class="modal-icon" style="background:var(--color-success-highlight); color:var(--color-success)">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+      </div>
+      <div>
+        <div class="modal-title" id="outputModalTitle">Script generado</div>
+        <div class="modal-subtitle">Listo para copiar y pegar en el dispositivo</div>
+      </div>
+      <button class="modal-close" onclick="closeModal('outputModal')" aria-label="Cerrar">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6L6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div class="script-output-wrap">
+        <div class="script-output-bar">
+          <span class="script-output-label">Script de configuración</span>
+          <div class="script-output-actions">
+            <button class="btn-copy" id="copyBtn">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+              Copiar
+            </button>
+            <button class="btn-download" id="downloadBtn">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              Descargar .txt
+            </button>
+          </div>
+        </div>
+        <pre class="script-output" id="scriptOutput"></pre>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-ghost" onclick="closeModal('outputModal'); openModal('formModal')">← Volver al formulario</button>
+      <button class="btn-ghost" onclick="closeModal('outputModal')">Cerrar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     MODAL: IMPORTAR TEMPLATE
+     ============================================================ -->
+<div class="modal-overlay" id="importModal" role="dialog" aria-modal="true" aria-labelledby="importModalTitle">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-icon" style="background:var(--color-primary-highlight); color:var(--color-primary)">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12l7 7 7-7"/></svg>
+      </div>
+      <div>
+        <div class="modal-title" id="importModalTitle">Importar Template</div>
+        <div class="modal-subtitle">Pega el JSON de un template exportado</div>
+      </div>
+      <button class="modal-close" onclick="closeModal('importModal')" aria-label="Cerrar">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6L6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label" for="importJson">JSON del template</label>
+        <textarea class="form-textarea" id="importJson" rows="10" placeholder='{"id":"mi-template","name":"Mi Template","category":"VLAN","description":"...","variables":[...],"template":"..."}'></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-ghost" onclick="closeModal('importModal')">Cancelar</button>
+      <button class="btn-primary" id="importConfirmBtn">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12l7 7 7-7"/></svg>
+        Importar
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast" role="status" aria-live="polite">
+  <span class="toast-dot" id="toastDot"></span>
+  <span id="toastMsg"></span>
+</div>
+
+<!-- ============================================================
+     JAVASCRIPT
+     ============================================================ -->
+<script src="./js/data.js"></script>
+<script src="./js/app.js"></script>
+<script src="./js/ui.js"></script>
+<script src="./js/events.js"></script>
+<script>
+  updateCounts();
+  renderGrid();
+</script>
+</body>
