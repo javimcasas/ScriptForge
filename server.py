@@ -3,7 +3,30 @@ import os
 import json
 
 PORT = 5500
-TEMPLATES_DIR = os.path.join(os.path.dirname(__file__), 'templates')
+TEMPLATES_DIR  = os.path.join(os.path.dirname(__file__), 'templates')
+CATEGORIES_FILE = os.path.join(os.path.dirname(__file__), 'categories.json')
+
+DEFAULT_CATEGORIES = [
+    {"id": "VLAN",       "icon": "network"},
+    {"id": "AAA",        "icon": "shield"},
+    {"id": "NTP",        "icon": "clock"},
+    {"id": "SNMP",       "icon": "activity"},
+    {"id": "Management", "icon": "settings"},
+    {"id": "Trunks",     "icon": "list"},
+    {"id": "Otros",      "icon": "more-horizontal"}
+]
+
+def read_categories():
+    if not os.path.exists(CATEGORIES_FILE):
+        with open(CATEGORIES_FILE, 'w', encoding='utf-8') as f:
+            json.dump(DEFAULT_CATEGORIES, f, indent=2, ensure_ascii=False)
+    with open(CATEGORIES_FILE, 'r', encoding='utf-8') as f:
+        return json.load(f)
+
+def write_categories(data):
+    with open(CATEGORIES_FILE, 'w', encoding='utf-8') as f:
+        json.dump(data, f, indent=2, ensure_ascii=False)
+
 
 class ScriptForgeHandler(http.server.SimpleHTTPRequestHandler):
 
@@ -14,31 +37,48 @@ class ScriptForgeHandler(http.server.SimpleHTTPRequestHandler):
                 self._respond(200, {'files': sorted(files)})
             except Exception as e:
                 self._respond(500, {'error': str(e)})
+        elif self.path == '/api/categories':
+            try:
+                self._respond(200, {'categories': read_categories()})
+            except Exception as e:
+                self._respond(500, {'error': str(e)})
         else:
             super().do_GET()
 
     def do_POST(self):
+        length = int(self.headers.get('Content-Length', 0))
+        body = self.rfile.read(length)
+
         if self.path == '/api/templates':
-            length = int(self.headers.get('Content-Length', 0))
-            body = self.rfile.read(length)
             try:
                 data = json.loads(body)
                 filename = data.get('filename', '').strip()
                 content  = data.get('content', '').strip()
-
                 if not filename or not content:
-                    self._respond(400, {'error': 'filename y content son obligatorios'})
-                    return
+                    self._respond(400, {'error': 'filename y content son obligatorios'}); return
                 if not filename.endswith('.cfg'):
                     filename += '.cfg'
                 filename = os.path.basename(filename)
-                filepath = os.path.join(TEMPLATES_DIR, filename)
-
                 os.makedirs(TEMPLATES_DIR, exist_ok=True)
-                with open(filepath, 'w', encoding='utf-8') as f:
+                with open(os.path.join(TEMPLATES_DIR, filename), 'w', encoding='utf-8') as f:
                     f.write(content)
-
                 self._respond(200, {'ok': True, 'filename': filename})
+            except Exception as e:
+                self._respond(500, {'error': str(e)})
+
+        elif self.path == '/api/categories':
+            try:
+                data = json.loads(body)
+                name = data.get('id', '').strip()
+                icon = data.get('icon', 'folder').strip()
+                if not name:
+                    self._respond(400, {'error': 'El nombre es obligatorio'}); return
+                cats = read_categories()
+                if any(c['id'].lower() == name.lower() for c in cats):
+                    self._respond(409, {'error': 'Ya existe esa categoría'}); return
+                cats.append({'id': name, 'icon': icon})
+                write_categories(cats)
+                self._respond(200, {'ok': True, 'category': {'id': name, 'icon': icon}})
             except Exception as e:
                 self._respond(500, {'error': str(e)})
         else:

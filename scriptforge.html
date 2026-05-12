@@ -48,51 +48,7 @@
 
   <!-- SIDEBAR -->
   <nav class="sidebar" id="sidebar">
-    <span class="sidebar-section-label">Vistas</span>
-    <button class="sidebar-item active" data-filter="all">
-      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
-      Todos los templates
-      <span class="count" id="count-all">0</span>
-    </button>
-
-    <div class="sidebar-divider"></div>
-    <span class="sidebar-section-label">Categorías</span>
-
-    <button class="sidebar-item" data-filter="VLAN">
-      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
-      VLAN
-      <span class="count" id="count-VLAN">0</span>
-    </button>
-    <button class="sidebar-item" data-filter="AAA">
-      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-      AAA
-      <span class="count" id="count-AAA">0</span>
-    </button>
-    <button class="sidebar-item" data-filter="NTP">
-      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-      NTP
-      <span class="count" id="count-NTP">0</span>
-    </button>
-    <button class="sidebar-item" data-filter="SNMP">
-      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>
-      SNMP
-      <span class="count" id="count-SNMP">0</span>
-    </button>
-    <button class="sidebar-item" data-filter="Management">
-      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93A10 10 0 0 0 4.93 19.07M19.07 4.93A10 10 0 0 1 4.93 19.07"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/></svg>
-      Management
-      <span class="count" id="count-Management">0</span>
-    </button>
-    <button class="sidebar-item" data-filter="Trunks">
-      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>
-      Trunks
-      <span class="count" id="count-Trunks">0</span>
-    </button>
-    <button class="sidebar-item" data-filter="Otros">
-      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg>
-      Otros
-      <span class="count" id="count-Otros">0</span>
-    </button>
+    <!-- Renderizado dinámicamente por ui.js → renderSidebar() -->
   </nav>
 
   <!-- MAIN CONTENT -->
@@ -106,14 +62,7 @@
 
     <!-- FILTER CHIPS -->
     <div class="filter-bar" id="filterBar">
-      <button class="filter-chip active" data-filter="all">Todos</button>
-      <button class="filter-chip" data-filter="VLAN">VLAN</button>
-      <button class="filter-chip" data-filter="AAA">AAA</button>
-      <button class="filter-chip" data-filter="NTP">NTP</button>
-      <button class="filter-chip" data-filter="SNMP">SNMP</button>
-      <button class="filter-chip" data-filter="Management">Management</button>
-      <button class="filter-chip" data-filter="Trunks">Trunks</button>
-      <button class="filter-chip" data-filter="Otros">Otros</button>
+      <!-- Renderizado dinámicamente por ui.js → renderFilterBar() -->
     </div>
 
     <!-- TEMPLATE GRID -->
@@ -329,6 +278,50 @@ interface {INTERFAZ}
   </div>
 </div>
 
+<!-- ============================================================
+     MODAL: NUEVA CATEGORÍA
+     ============================================================ -->
+<div class="modal-overlay" id="categoryModal" role="dialog" aria-modal="true" aria-labelledby="categoryModalTitle">
+  <div class="modal" style="max-width:480px">
+    <div class="modal-header">
+      <div class="modal-icon" style="background:var(--color-primary-highlight); color:var(--color-primary)">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+        </svg>
+      </div>
+      <div>
+        <div class="modal-title" id="categoryModalTitle">Nueva Categoría</div>
+        <div class="modal-subtitle">Elige nombre e icono</div>
+      </div>
+      <button class="modal-close" onclick="closeModal('categoryModal')" aria-label="Cerrar">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <path d="M18 6L6 18M6 6l12 12"/>
+        </svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div class="form-field">
+        <label class="form-label" for="catNameInput">Nombre <span class="label-required">*</span></label>
+        <input class="form-input" id="catNameInput" placeholder="Ej: Firewall, Routing, DNS…" autocomplete="off">
+      </div>
+      <div class="form-field">
+        <label class="form-label">Icono</label>
+        <div class="icon-picker" id="iconPicker"></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-ghost" onclick="closeModal('categoryModal')">Cancelar</button>
+      <button class="btn-success" id="confirmCategoryBtn">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <polyline points="9 11 12 14 22 4"/>
+          <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
+        </svg>
+        Crear Categoría
+      </button>
+    </div>
+  </div>
+</div>
+
 <!-- TOAST -->
 <div class="toast" id="toast" role="status" aria-live="polite">
   <span class="toast-dot" id="toastDot"></span>
@@ -344,6 +337,8 @@ interface {INTERFAZ}
 <script src="./js/events.js"></script>
 <script>
   loadTemplates().then(() => {
+    renderSidebar();
+    renderFilterBar();
     updateCounts();
     renderGrid();
   });

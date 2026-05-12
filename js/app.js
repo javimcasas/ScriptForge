@@ -1,14 +1,20 @@
 // ─── APP STATE ────────────────────────────────────────────────────────────────
-let templates = [];
-let currentFilter = 'all';
+let templates  = [];
+let categories = [];
+let currentFilter   = 'all';
 let currentTemplate = null;
-let searchQuery = '';
+let searchQuery     = '';
 
 async function loadTemplates() {
   try {
-    const res = await fetch('/api/templates');
-    const { files } = await res.json();
+    // Cargar categorías primero (las necesitan los templates al renderizar)
+    const catRes = await fetch('/api/categories');
+    const catData = await catRes.json();
+    categories = catData.categories || [];
 
+    // Cargar templates
+    const tplRes = await fetch('/api/templates');
+    const { files } = await tplRes.json();
     const results = await Promise.all(
       files.map(file =>
         fetch(`./templates/${file}`)
@@ -19,8 +25,8 @@ async function loadTemplates() {
     );
     templates = results.filter(Boolean);
   } catch (e) {
-    console.error('Error cargando templates:', e);
-    templates = [];
+    console.error('Error cargando datos:', e);
+    templates = []; categories = [];
   }
 }
 

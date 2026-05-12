@@ -1,0 +1,34 @@
+[
+  {
+    "id": "VLAN",
+    "icon": "network"
+  },
+  {
+    "id": "AAA",
+    "icon": "shield"
+  },
+  {
+    "id": "NTP",
+    "icon": "clock"
+  },
+  {
+    "id": "SNMP",
+    "icon": "activity"
+  },
+  {
+    "id": "Management",
+    "icon": "settings"
+  },
+  {
+    "id": "Trunks",
+    "icon": "list"
+  },
+  {
+    "id": "Otros",
+    "icon": "more-horizontal"
+  },
+  {
+    "id": "TEST",
+    "icon": "terminal"
+  }
+]

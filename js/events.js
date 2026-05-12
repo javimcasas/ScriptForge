@@ -185,3 +185,56 @@ document.getElementById('editSaveBtn').addEventListener('click', async () => {
   renderGrid();
   showToast(`Template "${parsed.name}" actualizado`);
 });
+
+// ─── CATEGORY MODAL ───────────────────────────────────────────────────────────
+(function buildIconPicker() {
+  const picker = document.getElementById('iconPicker');
+  let selectedIcon = 'folder';
+
+  Object.entries(ICON_SVG).forEach(([key, svg]) => {
+    const btn = document.createElement('button');
+    btn.className = 'icon-picker-btn';
+    btn.dataset.icon = key;
+    btn.title = key;
+    btn.innerHTML = svg.replace('width="13" height="13"', 'width="16" height="16"');
+    if (key === selectedIcon) btn.classList.add('selected');
+
+    btn.addEventListener('click', () => {
+      picker.querySelectorAll('.icon-picker-btn').forEach(b => b.classList.remove('selected'));
+      btn.classList.add('selected');
+      selectedIcon = key;
+    });
+
+    picker.appendChild(btn);
+  });
+
+  document.getElementById('confirmCategoryBtn').addEventListener('click', async () => {
+    const name = document.getElementById('catNameInput').value.trim();
+    if (!name) { showToast('El nombre es obligatorio', true); return; }
+
+    try {
+      const res = await fetch('/api/categories', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: name, icon: selectedIcon })
+      });
+      const result = await res.json();
+      if (!res.ok) { showToast(result.error || 'Error al crear categoría', true); return; }
+    } catch {
+      showToast('No se pudo conectar con el servidor', true); return;
+    }
+
+    categories.push({ id: name, icon: selectedIcon });
+    document.getElementById('catNameInput').value = '';
+    picker.querySelectorAll('.icon-picker-btn').forEach(b =>
+      b.classList.toggle('selected', b.dataset.icon === 'folder')
+    );
+    selectedIcon = 'folder';
+
+    closeModal('categoryModal');
+    renderSidebar();
+    renderFilterBar();
+    updateCounts();
+    showToast(`Categoría "${name}" creada`);
+  });
+})();
