@@ -170,7 +170,17 @@ function setSavedView() {
 function renderSavedViewer() {
   const viewer = document.getElementById('savedViewer');
 
-  if (!savedScripts.length) {
+  let filtered = savedScripts;
+  if (searchQuery) {
+    const q = searchQuery.toLowerCase();
+    filtered = filtered.filter(s =>
+      (s.customName   || '').toLowerCase().includes(q) ||
+      (s.templateName || '').toLowerCase().includes(q) ||
+      (s.category     || '').toLowerCase().includes(q)
+    );
+  }
+
+  if (!filtered.length) {
     viewer.innerHTML = `
       <div class="saved-empty">
         <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
@@ -178,7 +188,10 @@ function renderSavedViewer() {
           <polyline points="17 21 17 13 7 13 7 21"/>
           <polyline points="7 3 7 8 15 8"/>
         </svg>
-        <p>Aún no has guardado ningún script. Genera uno desde un template y pulsa <strong>Guardar</strong>.</p>
+        <p>${savedScripts.length
+          ? 'No hay resultados para esa búsqueda.'
+          : 'Aún no has guardado ningún script. Genera uno desde un template y pulsa <strong>Guardar</strong>.'
+        }</p>
       </div>`;
     return;
   }
@@ -186,12 +199,13 @@ function renderSavedViewer() {
   viewer.innerHTML = `<div class="saved-list" id="savedList"></div>`;
   const list = document.getElementById('savedList');
 
-  savedScripts.forEach(s => {
-    const card = document.createElement('div');
-    card.className = 'saved-card';
+  filtered.forEach(s => {
+    const card        = document.createElement('div');
+    card.className    = 'saved-card';
     card.dataset.filename = s.filename;
 
-    const color = getCategoryColor(s.category);
+    const color       = getCategoryColor(s.category);
+    const displayName = s.customName || s.templateName;
 
     card.innerHTML = `
       <div class="saved-card-header">
@@ -202,8 +216,10 @@ function renderSavedViewer() {
           </svg>
         </div>
         <div class="saved-card-info">
-          <div class="saved-card-name">${s.templateName}</div>
+          <div class="saved-card-name">${displayName}</div>
           <div class="saved-card-meta">
+            <span class="saved-card-template-tag">${s.templateName}</span>
+            <span class="meta-sep">·</span>
             <span>${s.category || 'Sin categoría'}</span>
             <span class="meta-sep">·</span>
             <span>${s.savedAt}</span>
@@ -248,9 +264,9 @@ function renderSavedViewer() {
         </div>
       </div>`;
 
-    // Toggle expand + lazy load del contenido
+    // Toggle expand + lazy load
     card.querySelector('.saved-card-header').addEventListener('click', async e => {
-      if (e.target.closest('button:not(.saved-card-header)')) return;
+      if (e.target.closest('button')) return;
       const isExpanded = card.classList.contains('expanded');
       card.classList.toggle('expanded', !isExpanded);
       if (!isExpanded) await loadSavedContent(s.filename);
@@ -275,13 +291,13 @@ function renderSavedViewer() {
       navigator.clipboard.writeText(pre.textContent).then(() => showToast('Script copiado'));
     });
 
-    // Descargar
+    // Descargar — usa displayName para el nombre del archivo
     card.querySelector('.btn-dl-saved').addEventListener('click', () => {
       const pre  = document.getElementById(`script-${s.filename}`);
       const blob = new Blob([pre.textContent], { type: 'text/plain' });
       const a    = document.createElement('a');
       a.href     = URL.createObjectURL(blob);
-      a.download = s.filename;
+      a.download = displayName.replace(/[^a-z0-9]/gi, '_').toLowerCase() + '.txt';
       a.click();
     });
 
@@ -495,7 +511,8 @@ function buildRawCfg(template) {
 
 // ─── DELETE SAVED MODAL ───────────────────────────────────────────────────────
 function openDeleteSavedModal(saved) {
-  document.getElementById('deleteSavedModalName').textContent = saved.templateName;
+  const displayName = saved.customName || saved.templateName;
+  document.getElementById('deleteSavedModalName').textContent = displayName;
   document.getElementById('confirmDeleteSavedBtn').onclick = async () => {
     try {
       const res    = await fetch(`/api/saved/${encodeURIComponent(saved.filename)}`, { method: 'DELETE' });
@@ -509,7 +526,7 @@ function openDeleteSavedModal(saved) {
     closeModal('deleteSavedModal');
     updateCounts();
     renderSavedViewer();
-    showToast(`Script "${saved.templateName}" eliminado`);
+    showToast(`Script "${displayName}" eliminado`);
   };
   openModal('deleteSavedModal');
 }

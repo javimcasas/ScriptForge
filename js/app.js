@@ -72,16 +72,16 @@ function parseCfg(text, filename) {
 }
 
 
-async function saveScript(templateName, category, content) {
+async function saveScript(templateName, category, content, customName) {
   const savedAt  = new Date().toISOString().slice(0, 16).replace('T', ' ');
-  const base     = templateName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+  const base     = (customName || templateName).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
   const filename = `${base}-${Date.now()}.txt`;
 
   try {
     const res = await fetch('/api/saved', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ filename, templateName, category, content, savedAt })
+      body: JSON.stringify({ filename, templateName, category, content, savedAt, customName })
     });
     const result = await res.json();
     if (!res.ok) { showToast(result.error || 'Error al guardar', true); return false; }
@@ -89,6 +89,6 @@ async function saveScript(templateName, category, content) {
     showToast('No se pudo conectar con el servidor', true); return false;
   }
 
-  savedScripts.unshift({ filename, templateName, category, savedAt });
+  savedScripts.unshift({ filename, templateName, category, savedAt, customName });
   return true;
 }

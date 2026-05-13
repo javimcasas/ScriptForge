@@ -26,18 +26,41 @@ document.getElementById('downloadBtn').addEventListener('click', () => {
 
 
 // ─── SAVE SCRIPT ──────────────────────────────────────────────────────────────
-document.getElementById('saveScriptBtn').addEventListener('click', async () => {
+document.getElementById('saveScriptBtn').addEventListener('click', () => {
   if (!currentTemplate) return;
+  // Pre-rellena el input con el nombre del template como sugerencia
+  const input = document.getElementById('saveNameInput');
+  input.value = currentTemplate.name;
+  document.getElementById('saveNameModalSubtitle').textContent =
+    `Template: ${currentTemplate.name}`;
+  closeModal('outputModal');
+  openModal('saveNameModal');
+  setTimeout(() => { input.select(); input.focus(); }, 220);
+});
+
+document.getElementById('confirmSaveNameBtn').addEventListener('click', async () => {
+  if (!currentTemplate) return;
+  const customName = document.getElementById('saveNameInput').value.trim();
+  if (!customName) {
+    showToast('El nombre no puede estar vacío', true); return;
+  }
   const content = document.getElementById('scriptOutput').textContent;
   const ok = await saveScript(
     currentTemplate.name,
     currentTemplate.category,
-    content
+    content,
+    customName
   );
   if (ok) {
+    closeModal('saveNameModal');
     updateCounts();
-    showToast(`Script "${currentTemplate.name}" guardado`);
+    showToast(`Script "${customName}" guardado`);
   }
+});
+
+// Enter en el input confirma el guardado
+document.getElementById('saveNameInput').addEventListener('keydown', e => {
+  if (e.key === 'Enter') document.getElementById('confirmSaveNameBtn').click();
 });
 
 
