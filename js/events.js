@@ -11,6 +11,7 @@ document.getElementById('copyBtn').addEventListener('click', () => {
   }
 });
 
+
 // ─── DOWNLOAD ─────────────────────────────────────────────────────────────────
 document.getElementById('downloadBtn').addEventListener('click', () => {
   const text = document.getElementById('scriptOutput').textContent;
@@ -23,23 +24,48 @@ document.getElementById('downloadBtn').addEventListener('click', () => {
   showToast('Archivo descargado');
 });
 
+
 // ─── IMPORT ───────────────────────────────────────────────────────────────────
-document.getElementById('importBtn').addEventListener('click', () => {
+let _pendingZipFile = null;
+
+function resetImportModal() {
+  _pendingZipFile = null;
   document.getElementById('cfgEditor').value = '';
   document.getElementById('importFilename').textContent = '';
+  document.getElementById('importModalSubtitle').textContent = 'Carga un .cfg o escríbelo manualmente';
+  document.getElementById('importConfirmBtn').innerHTML = `
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+    Cargar Template`;
+  document.getElementById('cfgEditorSection').classList.remove('hidden');
+  document.getElementById('zipPreviewSection').classList.add('hidden');
+  document.getElementById('zipFileList').innerHTML = '';
+  document.querySelectorAll('.editor-tab').forEach(t =>
+    t.classList.toggle('active', t.dataset.tab === 'editor')
+  );
+  document.getElementById('tabEditor').classList.remove('hidden');
+  document.getElementById('tabHelp').classList.add('hidden');
+}
+
+document.getElementById('importBtn').addEventListener('click', () => {
+  resetImportModal();
   openModal('importModal');
 });
 
 document.getElementById('browseBtn').addEventListener('click', () => {
   document.getElementById('cfgFileInput').click();
 });
+
 document.getElementById('dropZone').addEventListener('click', (e) => {
   if (e.target.id !== 'browseBtn') document.getElementById('cfgFileInput').click();
 });
 
 document.getElementById('cfgFileInput').addEventListener('change', e => {
   const file = e.target.files[0];
-  if (file) loadCfgFile(file);
+  if (!file) return;
+  if (file.name.endsWith('.zip'))      loadZipFile(file);
+  else if (file.name.endsWith('.cfg')) loadCfgFile(file);
+  else showToast('Solo se admiten archivos .cfg o .zip', true);
+  e.target.value = '';
 });
 
 const dropZone = document.getElementById('dropZone');
@@ -49,17 +75,68 @@ dropZone.addEventListener('drop', e => {
   e.preventDefault();
   dropZone.classList.remove('drag-over');
   const file = e.dataTransfer.files[0];
-  if (file && file.name.endsWith('.cfg')) loadCfgFile(file);
-  else showToast('Solo se admiten archivos .cfg', true);
+  if (!file) return;
+  if (file.name.endsWith('.zip'))      loadZipFile(file);
+  else if (file.name.endsWith('.cfg')) loadCfgFile(file);
+  else showToast('Solo se admiten archivos .cfg o .zip', true);
 });
 
 function loadCfgFile(file) {
+  _pendingZipFile = null;
   const reader = new FileReader();
   reader.onload = e => {
     document.getElementById('cfgEditor').value = e.target.result;
     document.getElementById('importFilename').textContent = file.name;
+    document.getElementById('cfgEditorSection').classList.remove('hidden');
+    document.getElementById('zipPreviewSection').classList.add('hidden');
+    document.getElementById('importModalSubtitle').textContent = 'Carga un .cfg o escríbelo manualmente';
+    document.getElementById('importConfirmBtn').innerHTML = `
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+      Cargar Template`;
   };
   reader.readAsText(file);
+}
+
+async function loadZipFile(file) {
+  if (!window.JSZip) {
+    await new Promise((resolve, reject) => {
+      const s = document.createElement('script');
+      s.src = 'https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js';
+      s.onload = resolve; s.onerror = reject;
+      document.head.appendChild(s);
+    });
+  }
+
+  let zip;
+  try {
+    zip = await JSZip.loadAsync(file);
+  } catch {
+    showToast('No se pudo leer el ZIP', true); return;
+  }
+
+  const cfgFiles = Object.keys(zip.files).filter(n => n.endsWith('.cfg') && !zip.files[n].dir);
+  if (!cfgFiles.length) {
+    showToast('El ZIP no contiene archivos .cfg', true); return;
+  }
+
+  _pendingZipFile = file;
+  document.getElementById('importFilename').textContent = file.name;
+  document.getElementById('importModalSubtitle').textContent =
+    `${cfgFiles.length} template${cfgFiles.length !== 1 ? 's' : ''} encontrado${cfgFiles.length !== 1 ? 's' : ''}`;
+  document.getElementById('cfgEditorSection').classList.add('hidden');
+  document.getElementById('zipPreviewSection').classList.remove('hidden');
+  document.getElementById('importConfirmBtn').innerHTML = `
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+    Importar ${cfgFiles.length} template${cfgFiles.length !== 1 ? 's' : ''}`;
+
+  document.getElementById('zipFileList').innerHTML = cfgFiles.map(name => `
+    <li>
+      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+        <polyline points="14 2 14 8 20 8"/>
+      </svg>
+      ${name.split('/').pop()}
+    </li>`).join('');
 }
 
 // Tabs editor/ayuda (import modal)
@@ -74,16 +151,50 @@ document.querySelectorAll('.editor-tab').forEach(tab => {
 
 // Confirmar carga
 document.getElementById('importConfirmBtn').addEventListener('click', async () => {
+
+  // ── Modo ZIP ──────────────────────────────────────────────────────────────
+  if (_pendingZipFile) {
+    const zip = await JSZip.loadAsync(_pendingZipFile);
+    const cfgFiles = Object.keys(zip.files).filter(n => n.endsWith('.cfg') && !zip.files[n].dir);
+    let ok = 0, skipped = 0;
+
+    for (const name of cfgFiles) {
+      const raw = await zip.files[name].async('string');
+      const filename = name.split('/').pop();
+      try {
+        const res = await fetch('/api/templates', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ filename, content: raw })
+        });
+        if (res.ok) {
+          const parsed = parseCfg(raw, filename);
+          if (parsed && !templates.find(t => t.id === parsed.id)) {
+            templates.push(parsed); ok++;
+          } else { skipped++; }
+        } else { skipped++; }
+      } catch { skipped++; }
+    }
+
+    resetImportModal();
+    closeModal('importModal');
+    updateCounts();
+    renderGrid();
+    showToast(skipped
+      ? `${ok} templates importados, ${skipped} omitidos (ya existían)`
+      : `${ok} templates importados correctamente`
+    );
+    return;
+  }
+
+  // ── Modo CFG individual ───────────────────────────────────────────────────
   const raw = document.getElementById('cfgEditor').value.trim();
   if (!raw) { showToast('El editor está vacío', true); return; }
 
   const parsed = parseCfg(raw, 'manual-' + Date.now() + '.cfg');
   if (!parsed) { showToast('Faltan metadatos: name y category son obligatorios', true); return; }
 
-  const filenameBase = parsed.name
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-|-$/g, '');
+  const filenameBase = parsed.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
   const filename = `${parsed.category.toLowerCase()}-${filenameBase}.cfg`;
 
   try {
@@ -99,13 +210,13 @@ document.getElementById('importConfirmBtn').addEventListener('click', async () =
   }
 
   templates.push(parsed);
-  document.getElementById('cfgEditor').value = '';
-  document.getElementById('importFilename').textContent = '';
+  resetImportModal();
   closeModal('importModal');
   updateCounts();
   renderGrid();
   showToast(`Template "${parsed.name}" guardado en /templates`);
 });
+
 
 // ─── GENERATE ─────────────────────────────────────────────────────────────────
 document.getElementById('generateBtn').addEventListener('click', generateScript);
@@ -113,11 +224,13 @@ document.getElementById('formModalBody').addEventListener('keydown', e => {
   if (e.key === 'Enter') generateScript();
 });
 
+
 // ─── SEARCH ───────────────────────────────────────────────────────────────────
 document.getElementById('globalSearch').addEventListener('input', e => {
   searchQuery = e.target.value.trim();
   renderGrid();
 });
+
 
 // ─── MODAL CLOSE (overlay click + Escape) ─────────────────────────────────────
 document.querySelectorAll('.modal-overlay').forEach(overlay => {
@@ -132,6 +245,7 @@ document.addEventListener('keydown', e => {
   }
 });
 
+
 // ─── EDIT MODAL TABS ──────────────────────────────────────────────────────────
 document.querySelectorAll('[data-edit-tab]').forEach(tab => {
   tab.addEventListener('click', () => {
@@ -141,6 +255,7 @@ document.querySelectorAll('[data-edit-tab]').forEach(tab => {
     document.getElementById('editTabHelp').classList.toggle('hidden', tab.dataset.editTab !== 'help');
   });
 });
+
 
 // ─── EDIT SAVE ────────────────────────────────────────────────────────────────
 document.getElementById('editSaveBtn').addEventListener('click', async () => {
@@ -172,21 +287,18 @@ document.getElementById('editSaveBtn').addEventListener('click', async () => {
   showToast(`Template "${parsed.name}" actualizado`);
 });
 
+
 // ─── CATEGORY MODAL ───────────────────────────────────────────────────────────
-// Estado del modal, vive fuera para que confirmCategoryBtn lo lea
 let _selectedIcon  = 'folder';
 let _selectedColor = COLOR_OPTIONS[0].id;
 
-// Se llama desde renderSidebar() al hacer click en el botón +
 function buildCategoryModal() {
   _selectedIcon  = 'folder';
   _selectedColor = COLOR_OPTIONS[0].id;
   document.getElementById('catNameInput').value = '';
 
-  // ── Icon picker ──────────────────────────────────────────────────────────
   const iconPicker = document.getElementById('iconPicker');
   iconPicker.innerHTML = '';
-
   Object.entries(ICON_SVG).forEach(([key, svg]) => {
     const btn = document.createElement('button');
     btn.type = 'button';
@@ -203,10 +315,8 @@ function buildCategoryModal() {
     iconPicker.appendChild(btn);
   });
 
-  // ── Color picker ─────────────────────────────────────────────────────────
   const colorPicker = document.getElementById('colorPicker');
   colorPicker.innerHTML = '';
-
   COLOR_OPTIONS.forEach(opt => {
     const btn = document.createElement('button');
     btn.type = 'button';
@@ -223,6 +333,7 @@ function buildCategoryModal() {
     colorPicker.appendChild(btn);
   });
 }
+
 
 // ─── CONFIRM CATEGORY ─────────────────────────────────────────────────────────
 document.getElementById('confirmCategoryBtn').addEventListener('click', async () => {
@@ -271,6 +382,7 @@ function openDeleteCatModal(catId) {
   openModal('deleteCatModal');
 }
 
+
 // ─── THEME TOGGLE ─────────────────────────────────────────────────────────────
 (function () {
   const btn = document.querySelector('[data-theme-toggle]');
@@ -285,14 +397,12 @@ function openDeleteCatModal(catId) {
     btn.setAttribute('aria-label', dark ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro');
   }
 
-  applyTheme(); // estado inicial
-
-  btn.addEventListener('click', () => {
-    dark = !dark;
-    applyTheme();
-  });
+  applyTheme();
+  btn.addEventListener('click', () => { dark = !dark; applyTheme(); });
 })();
 
+
+// ─── SIDEBAR DRAG ─────────────────────────────────────────────────────────────
 function initSidebarDrag() {
   const items = [...document.querySelectorAll('.sidebar-item[data-filter]:not([data-filter="all"])')];
   let dragSrc = null;
@@ -300,7 +410,6 @@ function initSidebarDrag() {
   items.forEach(item => {
     const handle = item.querySelector('.sidebar-drag-handle');
 
-    // Solo el handle activa el drag
     handle.addEventListener('mousedown', () => { item.draggable = true; });
     handle.addEventListener('mouseleave', () => {
       if (dragSrc !== item) item.draggable = false;
@@ -318,7 +427,6 @@ function initSidebarDrag() {
       item.classList.remove('dragging');
       document.querySelectorAll('.sidebar-item').forEach(i => i.classList.remove('drag-over'));
       dragSrc = null;
-      // Persiste el nuevo orden en el servidor
       saveCategoryOrder();
     });
 
@@ -332,21 +440,18 @@ function initSidebarDrag() {
     });
 
     item.addEventListener('drop', e => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (!dragSrc || dragSrc === item) return;
+      e.preventDefault();
+      e.stopPropagation();
+      if (!dragSrc || dragSrc === item) return;
 
-    const srcCat = dragSrc.dataset.filter;
-    const tgtCat = item.dataset.filter;
-    const srcIdx = categories.findIndex(c => c.id === srcCat);
-    const tgtIdx = categories.findIndex(c => c.id === tgtCat);
+      const srcIdx = categories.findIndex(c => c.id === dragSrc.dataset.filter);
+      const tgtIdx = categories.findIndex(c => c.id === item.dataset.filter);
+      const [moved] = categories.splice(srcIdx, 1);
+      categories.splice(tgtIdx, 0, moved);
 
-    const [moved] = categories.splice(srcIdx, 1);
-    categories.splice(tgtIdx, 0, moved);
-
-    renderSidebar();
-    renderFilterBar();
-    updateCounts();   // ← esto faltaba
+      renderSidebar();
+      renderFilterBar();
+      updateCounts();
     });
   });
 }
@@ -358,10 +463,9 @@ async function saveCategoryOrder() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ order: categories.map(c => c.id) })
     });
-  } catch {
-    // Fallo silencioso — el orden en memoria ya es correcto
-  }
+  } catch { /* fallo silencioso */ }
 }
+
 
 // ─── EXPORT ZIP ───────────────────────────────────────────────────────────────
 document.getElementById('exportBtn').addEventListener('click', async () => {

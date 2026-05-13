@@ -156,7 +156,7 @@
       </div>
       <div>
         <div class="modal-title" id="importModalTitle">Nuevo Template</div>
-        <div class="modal-subtitle">Carga un .cfg o escríbelo manualmente</div>
+        <div class="modal-subtitle" id="importModalSubtitle">Carga un .cfg o escríbelo manualmente</div>
       </div>
       <button class="modal-close" onclick="closeModal('importModal')" aria-label="Cerrar">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6L6 18M6 6l12 12"/></svg>
@@ -167,30 +167,29 @@
 
       <!-- DROP ZONE -->
       <div class="drop-zone" id="dropZone">
-        <input type="file" id="cfgFileInput" accept=".cfg" hidden>
+        <input type="file" id="cfgFileInput" accept=".cfg,.zip" hidden>
         <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-        <p class="drop-zone-text">Arrastra un archivo <strong>.cfg</strong> aquí</p>
+        <p class="drop-zone-text">Arrastra un archivo <strong>.cfg</strong> o <strong>.zip</strong> aquí</p>
         <button class="btn-ghost" id="browseBtn" type="button">Seleccionar archivo</button>
       </div>
 
-      <!-- EDITOR TABS -->
-      <div class="editor-tabs">
-        <button class="editor-tab active" data-tab="editor">Editor</button>
-        <button class="editor-tab" data-tab="help">Ayuda</button>
-      </div>
+      <!-- EDITOR TABS — ocultos cuando se carga un ZIP -->
+      <div id="cfgEditorSection">
+        <div class="editor-tabs">
+          <button class="editor-tab active" data-tab="editor">Editor</button>
+          <button class="editor-tab" data-tab="help">Ayuda</button>
+        </div>
 
-      <!-- EDITOR PANEL -->
-      <div class="editor-panel" id="tabEditor">
-        <textarea class="import-textarea" id="cfgEditor" spellcheck="false"
-          placeholder="# name: Mi Template&#10;# category: Management&#10;# description: Descripción del template.&#10;&#10;sysname {HOSTNAME}"></textarea>
-      </div>
+        <div class="editor-panel" id="tabEditor">
+          <textarea class="import-textarea" id="cfgEditor" spellcheck="false"
+            placeholder="# name: Mi Template&#10;# category: Management&#10;# description: Descripción del template.&#10;&#10;sysname {HOSTNAME}"></textarea>
+        </div>
 
-      <!-- HELP PANEL -->
-      <div class="editor-panel hidden" id="tabHelp">
-        <div class="help-content">
-          <p class="help-title">Formato del archivo .cfg</p>
-          <p class="help-desc">Las primeras líneas son metadatos (empiezan con <code>#</code>). El resto es el script.</p>
-          <pre class="help-example"># name: Nombre visible en la card
+        <div class="editor-panel hidden" id="tabHelp">
+          <div class="help-content">
+            <p class="help-title">Formato del archivo .cfg</p>
+            <p class="help-desc">Las primeras líneas son metadatos (empiezan con <code>#</code>). El resto es el script.</p>
+            <pre class="help-example"># name: Nombre visible en la card
 # category: Management
 # description: Descripción breve.
 
@@ -198,13 +197,18 @@ sysname {HOSTNAME}
 !
 interface {INTERFAZ}
  ip address {IP} {MASCARA}</pre>
-          <p class="help-title">Categorías disponibles</p>
-          <div class="help-cats">
-            <!-- Generado dinámicamente por ui.js → renderHelpCats() -->
+            <p class="help-title">Categorías disponibles</p>
+            <div class="help-cats"></div>
+            <p class="help-title">Variables</p>
+            <p class="help-desc">Escribe las variables entre llaves en mayúsculas: <code>{NOMBRE_VARIABLE}</code>. Se generará un campo de formulario por cada una.</p>
           </div>
-          <p class="help-title">Variables</p>
-          <p class="help-desc">Escribe las variables entre llaves en mayúsculas: <code>{NOMBRE_VARIABLE}</code>. Se generará un campo de formulario por cada una.</p>
         </div>
+      </div>
+
+      <!-- ZIP PREVIEW — visible solo cuando se carga un ZIP -->
+      <div id="zipPreviewSection" class="hidden">
+        <p class="help-title" style="margin-bottom:var(--space-2)">Contenido del ZIP</p>
+        <ul class="zip-file-list" id="zipFileList"></ul>
       </div>
 
     </div>
