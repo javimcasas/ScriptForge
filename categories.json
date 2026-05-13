@@ -1,20 +1,12 @@
 [
   {
-    "id": "GVA",
-    "icon": "network",
-    "color": "blue"
+    "id": "Switches",
+    "icon": "wifi",
+    "color": "green"
   },
   {
     "id": "Management",
     "icon": "settings"
-  },
-  {
-    "id": "VLAN",
-    "icon": "network"
-  },
-  {
-    "id": "NTP",
-    "icon": "clock"
   },
   {
     "id": "Otros",
