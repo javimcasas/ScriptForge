@@ -151,3 +151,16 @@ input, textarea, select { font: inherit; color: inherit; }
 }
 .filter-chip:hover { border-color: var(--color-primary); color: var(--color-primary); background: var(--color-primary-highlight); }
 .filter-chip.active { border-color: var(--color-primary); color: var(--color-primary); background: var(--color-primary-highlight); font-weight: 500; }
+
+/* ============================================================
+   SCROLLBARS
+   ============================================================ */
+/* Webkit (Chrome, Edge, Safari) */
+::-webkit-scrollbar               { width: 6px; height: 6px; }
+::-webkit-scrollbar-track         { background: transparent; }
+::-webkit-scrollbar-thumb         { background: var(--color-border); border-radius: var(--radius-full); }
+::-webkit-scrollbar-thumb:hover   { background: var(--color-text-faint); }
+::-webkit-scrollbar-corner        { background: transparent; }
+
+/* Firefox */
+* { scrollbar-width: thin; scrollbar-color: var(--color-border) transparent; }
