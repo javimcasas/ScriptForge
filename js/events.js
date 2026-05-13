@@ -191,11 +191,11 @@ document.getElementById('importConfirmBtn').addEventListener('click', async () =
   const raw = document.getElementById('cfgEditor').value.trim();
   if (!raw) { showToast('El editor está vacío', true); return; }
 
-  const parsed = parseCfg(raw, 'manual-' + Date.now() + '.cfg');
-  if (!parsed) { showToast('Faltan metadatos: name y category son obligatorios', true); return; }
+  const meta = parseCfg(raw, 'meta.cfg');
+  if (!meta) { showToast('Faltan metadatos: name y category son obligatorios', true); return; }
 
-  const filenameBase = parsed.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
-  const filename = `${parsed.category.toLowerCase()}-${filenameBase}.cfg`;
+  const filenameBase = meta.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+  const filename = `${meta.category.toLowerCase()}-${filenameBase}.cfg`;
 
   try {
     const res = await fetch('/api/templates', {
@@ -209,6 +209,7 @@ document.getElementById('importConfirmBtn').addEventListener('click', async () =
     showToast('No se pudo conectar con el servidor', true); return;
   }
 
+  const parsed = parseCfg(raw, filename);
   templates.push(parsed);
   resetImportModal();
   closeModal('importModal');
@@ -278,8 +279,10 @@ document.getElementById('editSaveBtn').addEventListener('click', async () => {
     showToast('No se pudo conectar con el servidor', true); return;
   }
 
-  const idx = templates.findIndex(t => t.id === parsed.id);
+  const oldId = filename.replace('.cfg', '');
+  const idx = templates.findIndex(t => t.id === oldId);
   if (idx !== -1) templates[idx] = parsed;
+  else templates.push(parsed);
 
   closeModal('editModal');
   updateCounts();

@@ -3,6 +3,7 @@ import os
 import json
 import zipfile
 import io
+from urllib.parse import unquote
 
 
 PORT = 5500
@@ -71,7 +72,6 @@ class ScriptForgeHandler(http.server.SimpleHTTPRequestHandler):
                     for fname in cfg_files:
                         fpath = os.path.join(TEMPLATES_DIR, fname)
                         zf.write(fpath, arcname=fname)
-                    # Incluir categories.json si existe
                     if os.path.exists(CATEGORIES_FILE):
                         zf.write(CATEGORIES_FILE, arcname='categories.json')
                 body = buf.getvalue()
@@ -145,22 +145,25 @@ class ScriptForgeHandler(http.server.SimpleHTTPRequestHandler):
 
     def do_DELETE(self):
         if self.path.startswith('/api/templates/'):
-            filename = os.path.basename(self.path[len('/api/templates/'):])
+            # unquote descodifica %20, %C3%B3, etc.
+            raw      = self.path[len('/api/templates/'):]
+            filename = os.path.basename(unquote(raw, encoding='utf-8'))
             filepath = os.path.join(TEMPLATES_DIR, filename)
             try:
                 if not os.path.exists(filepath):
-                    self._respond(404, {'error': 'Archivo no encontrado'}); return
+                    self._respond(404, {'error': f'Archivo no encontrado: {filename}'}); return
                 os.remove(filepath)
                 self._respond(200, {'ok': True})
             except Exception as e:
                 self._respond(500, {'error': str(e)})
 
         elif self.path.startswith('/api/categories/'):
-            cat_id = self.path[len('/api/categories/'):]
+            raw    = self.path[len('/api/categories/'):]
+            cat_id = unquote(raw, encoding='utf-8')
             try:
                 cats = read_categories()
-                if cat_id not in [c['id'] for c in cats]:
-                    self._respond(404, {'error': 'Categoría no encontrada'}); return
+                if not any(c['id'] == cat_id for c in cats):
+                    self._respond(404, {'error': f'Categoría no encontrada: {cat_id}'}); return
                 cats = [c for c in cats if c['id'] != cat_id]
                 write_categories(cats)
                 self._respond(200, {'ok': True})
