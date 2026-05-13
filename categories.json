@@ -5,10 +5,6 @@
     "color": "green"
   },
   {
-    "id": "Management",
-    "icon": "settings"
-  },
-  {
     "id": "Otros",
     "icon": "more-horizontal"
   }
