@@ -6,10 +6,10 @@ import io
 from urllib.parse import unquote
 
 
-PORT           = 5500
-TEMPLATES_DIR  = os.path.join(os.path.dirname(__file__), 'templates')
-CATEGORIES_FILE= os.path.join(os.path.dirname(__file__), 'categories.json')
-SAVED_DIR      = os.path.join(os.path.dirname(__file__), 'saved')
+PORT            = 5500
+TEMPLATES_DIR   = os.path.join(os.path.dirname(__file__), 'templates')
+CATEGORIES_FILE = os.path.join(os.path.dirname(__file__), 'categories.json')
+SAVED_DIR       = os.path.join(os.path.dirname(__file__), 'saved')
 
 
 DEFAULT_CATEGORIES = [
@@ -26,14 +26,19 @@ DEFAULT_CATEGORIES = [
 def read_categories():
     if not os.path.exists(CATEGORIES_FILE):
         with open(CATEGORIES_FILE, 'w', encoding='utf-8') as f:
-            json.dump(DEFAULT_CATEGORIES, f, indent=2, ensure_ascii=False)
+            json.dump({"categories": DEFAULT_CATEGORIES}, f, indent=2, ensure_ascii=False)
+        return DEFAULT_CATEGORIES
     with open(CATEGORIES_FILE, 'r', encoding='utf-8') as f:
-        return json.load(f)
+        data = json.load(f)
+    # Compatibilidad: si el archivo es una lista plana (formato antiguo), normaliza
+    if isinstance(data, list):
+        return data
+    return data.get('categories', [])
 
 
 def write_categories(data):
     with open(CATEGORIES_FILE, 'w', encoding='utf-8') as f:
-        json.dump(data, f, indent=2, ensure_ascii=False)
+        json.dump({"categories": data}, f, indent=2, ensure_ascii=False)
 
 
 class ScriptForgeHandler(http.server.SimpleHTTPRequestHandler):
@@ -48,6 +53,7 @@ class ScriptForgeHandler(http.server.SimpleHTTPRequestHandler):
     def do_GET(self):
         if self.path == '/api/templates':
             try:
+                os.makedirs(TEMPLATES_DIR, exist_ok=True)
                 files = sorted(
                     [f for f in os.listdir(TEMPLATES_DIR) if f.endswith('.cfg')],
                     key=lambda f: os.path.getmtime(os.path.join(TEMPLATES_DIR, f))
@@ -85,6 +91,7 @@ class ScriptForgeHandler(http.server.SimpleHTTPRequestHandler):
                         'templateName': meta.get('template', fname.replace('.txt', '')),
                         'category':     meta.get('category', ''),
                         'savedAt':      meta.get('savedAt', ''),
+                        'customName':   meta.get('customName', ''),
                     })
                 self._respond(200, {'saved': result})
             except Exception as e:
@@ -93,6 +100,7 @@ class ScriptForgeHandler(http.server.SimpleHTTPRequestHandler):
         elif self.path == '/api/export':
             try:
                 buf = io.BytesIO()
+                os.makedirs(TEMPLATES_DIR, exist_ok=True)
                 cfg_files = sorted(
                     [f for f in os.listdir(TEMPLATES_DIR) if f.endswith('.cfg')],
                     key=lambda f: os.path.getmtime(os.path.join(TEMPLATES_DIR, f))
@@ -145,13 +153,17 @@ class ScriptForgeHandler(http.server.SimpleHTTPRequestHandler):
                 category      = data.get('category', '').strip()
                 content       = data.get('content', '').strip()
                 saved_at      = data.get('savedAt', '').strip()
+                custom_name   = data.get('customName', '').strip()
                 filename      = os.path.basename(data.get('filename', '').strip())
                 if not template_name or not content or not filename:
                     self._respond(400, {'error': 'templateName, filename y content son obligatorios'}); return
                 if not filename.endswith('.txt'):
                     filename += '.txt'
                 os.makedirs(SAVED_DIR, exist_ok=True)
-                meta_line = f'## template:{template_name} | category:{category} | savedAt:{saved_at}\n'
+                meta_line = (
+                    f'## template:{template_name} | category:{category} | '
+                    f'savedAt:{saved_at} | customName:{custom_name}\n'
+                )
                 with open(os.path.join(SAVED_DIR, filename), 'w', encoding='utf-8') as f:
                     f.write(meta_line + content)
                 self._respond(200, {'ok': True, 'filename': filename})
@@ -249,6 +261,9 @@ class ScriptForgeHandler(http.server.SimpleHTTPRequestHandler):
 
 if __name__ == '__main__':
     os.chdir(os.path.dirname(os.path.abspath(__file__)))
+    os.makedirs(TEMPLATES_DIR, exist_ok=True)
+    os.makedirs(SAVED_DIR, exist_ok=True)
+    read_categories()  # crea categories.json con defaults si no existe
     with http.server.HTTPServer(('', PORT), ScriptForgeHandler) as httpd:
         print(f"ScriptForge server → http://localhost:{PORT}")
         httpd.serve_forever()
