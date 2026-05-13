@@ -1,5 +1,10 @@
 [
   {
+    "id": "GVA",
+    "icon": "network",
+    "color": "blue"
+  },
+  {
     "id": "Management",
     "icon": "settings"
   },
@@ -10,23 +15,6 @@
   {
     "id": "NTP",
     "icon": "clock"
-  },
-  {
-    "id": "AAA",
-    "icon": "shield"
-  },
-  {
-    "id": "Trunks",
-    "icon": "list"
-  },
-  {
-    "id": "SNMP",
-    "icon": "activity"
-  },
-  {
-    "id": "Checking",
-    "icon": "lock",
-    "color": "pink"
   },
   {
     "id": "Otros",

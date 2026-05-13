@@ -3,3 +3,4 @@ node_modules/
 *.log
 templates/*.cfg
 !templates/mgmt-ip-gestion.cfg
+categories.json

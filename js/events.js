@@ -362,3 +362,21 @@ async function saveCategoryOrder() {
     // Fallo silencioso — el orden en memoria ya es correcto
   }
 }
+
+// ─── EXPORT ZIP ───────────────────────────────────────────────────────────────
+document.getElementById('exportBtn').addEventListener('click', async () => {
+  try {
+    const res = await fetch('/api/export');
+    if (!res.ok) { showToast('Error al generar el ZIP', true); return; }
+    const blob = await res.blob();
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href     = url;
+    a.download = `scriptforge-export-${new Date().toISOString().slice(0,10)}.zip`;
+    a.click();
+    URL.revokeObjectURL(url);
+    showToast(`ZIP exportado con ${templates.length} templates`);
+  } catch {
+    showToast('No se pudo conectar con el servidor', true);
+  }
+});

@@ -1,6 +1,8 @@
 import http.server
 import os
 import json
+import zipfile
+import io
 
 
 PORT = 5500
@@ -55,6 +57,31 @@ class ScriptForgeHandler(http.server.SimpleHTTPRequestHandler):
         elif self.path == '/api/categories':
             try:
                 self._respond(200, {'categories': read_categories()})
+            except Exception as e:
+                self._respond(500, {'error': str(e)})
+
+        elif self.path == '/api/export':
+            try:
+                buf = io.BytesIO()
+                cfg_files = sorted(
+                    [f for f in os.listdir(TEMPLATES_DIR) if f.endswith('.cfg')],
+                    key=lambda f: os.path.getmtime(os.path.join(TEMPLATES_DIR, f))
+                )
+                with zipfile.ZipFile(buf, 'w', zipfile.ZIP_DEFLATED) as zf:
+                    for fname in cfg_files:
+                        fpath = os.path.join(TEMPLATES_DIR, fname)
+                        zf.write(fpath, arcname=fname)
+                    # Incluir categories.json si existe
+                    if os.path.exists(CATEGORIES_FILE):
+                        zf.write(CATEGORIES_FILE, arcname='categories.json')
+                body = buf.getvalue()
+                self.send_response(200)
+                self.send_header('Content-Type', 'application/zip')
+                self.send_header('Content-Disposition', 'attachment; filename="scriptforge-export.zip"')
+                self.send_header('Content-Length', len(body))
+                self.send_header('Access-Control-Allow-Origin', '*')
+                self.end_headers()
+                self.wfile.write(body)
             except Exception as e:
                 self._respond(500, {'error': str(e)})
 
