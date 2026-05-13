@@ -6,9 +6,10 @@ import io
 from urllib.parse import unquote
 
 
-PORT = 5500
-TEMPLATES_DIR   = os.path.join(os.path.dirname(__file__), 'templates')
-CATEGORIES_FILE = os.path.join(os.path.dirname(__file__), 'categories.json')
+PORT           = 5500
+TEMPLATES_DIR  = os.path.join(os.path.dirname(__file__), 'templates')
+CATEGORIES_FILE= os.path.join(os.path.dirname(__file__), 'categories.json')
+SAVED_DIR      = os.path.join(os.path.dirname(__file__), 'saved')
 
 
 DEFAULT_CATEGORIES = [
@@ -61,6 +62,34 @@ class ScriptForgeHandler(http.server.SimpleHTTPRequestHandler):
             except Exception as e:
                 self._respond(500, {'error': str(e)})
 
+        elif self.path == '/api/saved':
+            try:
+                os.makedirs(SAVED_DIR, exist_ok=True)
+                files = sorted(
+                    [f for f in os.listdir(SAVED_DIR) if f.endswith('.txt')],
+                    key=lambda f: os.path.getmtime(os.path.join(SAVED_DIR, f)),
+                    reverse=True
+                )
+                result = []
+                for fname in files:
+                    fpath = os.path.join(SAVED_DIR, fname)
+                    with open(fpath, 'r', encoding='utf-8') as f:
+                        first_line = f.readline().strip()
+                    meta = {}
+                    if first_line.startswith('##'):
+                        for part in first_line[2:].split('|'):
+                            k, _, v = part.partition(':')
+                            meta[k.strip()] = v.strip()
+                    result.append({
+                        'filename':     fname,
+                        'templateName': meta.get('template', fname.replace('.txt', '')),
+                        'category':     meta.get('category', ''),
+                        'savedAt':      meta.get('savedAt', ''),
+                    })
+                self._respond(200, {'saved': result})
+            except Exception as e:
+                self._respond(500, {'error': str(e)})
+
         elif self.path == '/api/export':
             try:
                 buf = io.BytesIO()
@@ -90,11 +119,11 @@ class ScriptForgeHandler(http.server.SimpleHTTPRequestHandler):
 
     def do_POST(self):
         length = int(self.headers.get('Content-Length', 0))
-        body = self.rfile.read(length)
+        body   = self.rfile.read(length)
 
         if self.path == '/api/templates':
             try:
-                data = json.loads(body)
+                data     = json.loads(body)
                 filename = data.get('filename', '').strip()
                 content  = data.get('content', '').strip()
                 if not filename or not content:
@@ -109,9 +138,29 @@ class ScriptForgeHandler(http.server.SimpleHTTPRequestHandler):
             except Exception as e:
                 self._respond(500, {'error': str(e)})
 
+        elif self.path == '/api/saved':
+            try:
+                data          = json.loads(body)
+                template_name = data.get('templateName', '').strip()
+                category      = data.get('category', '').strip()
+                content       = data.get('content', '').strip()
+                saved_at      = data.get('savedAt', '').strip()
+                filename      = os.path.basename(data.get('filename', '').strip())
+                if not template_name or not content or not filename:
+                    self._respond(400, {'error': 'templateName, filename y content son obligatorios'}); return
+                if not filename.endswith('.txt'):
+                    filename += '.txt'
+                os.makedirs(SAVED_DIR, exist_ok=True)
+                meta_line = f'## template:{template_name} | category:{category} | savedAt:{saved_at}\n'
+                with open(os.path.join(SAVED_DIR, filename), 'w', encoding='utf-8') as f:
+                    f.write(meta_line + content)
+                self._respond(200, {'ok': True, 'filename': filename})
+            except Exception as e:
+                self._respond(500, {'error': str(e)})
+
         elif self.path == '/api/categories':
             try:
-                data = json.loads(body)
+                data  = json.loads(body)
                 name  = data.get('id', '').strip()
                 icon  = data.get('icon', 'folder').strip()
                 color = data.get('color', '').strip()
@@ -128,9 +177,9 @@ class ScriptForgeHandler(http.server.SimpleHTTPRequestHandler):
 
         elif self.path == '/api/categories/reorder':
             try:
-                data  = json.loads(body)
-                order = data.get('order', [])
-                cats  = read_categories()
+                data      = json.loads(body)
+                order     = data.get('order', [])
+                cats      = read_categories()
                 cat_map   = {c['id']: c for c in cats}
                 reordered = [cat_map[i] for i in order if i in cat_map]
                 seen      = {c['id'] for c in reordered}
@@ -145,10 +194,21 @@ class ScriptForgeHandler(http.server.SimpleHTTPRequestHandler):
 
     def do_DELETE(self):
         if self.path.startswith('/api/templates/'):
-            # unquote descodifica %20, %C3%B3, etc.
             raw      = self.path[len('/api/templates/'):]
             filename = os.path.basename(unquote(raw, encoding='utf-8'))
             filepath = os.path.join(TEMPLATES_DIR, filename)
+            try:
+                if not os.path.exists(filepath):
+                    self._respond(404, {'error': f'Archivo no encontrado: {filename}'}); return
+                os.remove(filepath)
+                self._respond(200, {'ok': True})
+            except Exception as e:
+                self._respond(500, {'error': str(e)})
+
+        elif self.path.startswith('/api/saved/'):
+            raw      = self.path[len('/api/saved/'):]
+            filename = os.path.basename(unquote(raw, encoding='utf-8'))
+            filepath = os.path.join(SAVED_DIR, filename)
             try:
                 if not os.path.exists(filepath):
                     self._respond(404, {'error': f'Archivo no encontrado: {filename}'}); return

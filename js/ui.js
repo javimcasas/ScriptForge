@@ -2,42 +2,51 @@
 function renderSidebar() {
   const sidebar = document.getElementById('sidebar');
 
-  // Construye los items de categoría dinámicamente
-    const catItems = categories.map(cat => `
+  const catItems = categories.map(cat => `
     <div class="sidebar-item" data-filter="${cat.id}" role="button" tabindex="0">
-        <span class="sidebar-drag-handle" title="Arrastrar para reordenar">
+      <span class="sidebar-drag-handle" title="Arrastrar para reordenar">
         <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-            <circle cx="9"  cy="5"  r="1" fill="currentColor"/>
-            <circle cx="9"  cy="12" r="1" fill="currentColor"/>
-            <circle cx="9"  cy="19" r="1" fill="currentColor"/>
-            <circle cx="15" cy="5"  r="1" fill="currentColor"/>
-            <circle cx="15" cy="12" r="1" fill="currentColor"/>
-            <circle cx="15" cy="19" r="1" fill="currentColor"/>
+          <circle cx="9"  cy="5"  r="1" fill="currentColor"/>
+          <circle cx="9"  cy="12" r="1" fill="currentColor"/>
+          <circle cx="9"  cy="19" r="1" fill="currentColor"/>
+          <circle cx="15" cy="5"  r="1" fill="currentColor"/>
+          <circle cx="15" cy="12" r="1" fill="currentColor"/>
+          <circle cx="15" cy="19" r="1" fill="currentColor"/>
         </svg>
-        </span>
-        ${getCategoryIcon(cat.id)}
-        <span class="sidebar-cat-label">${cat.id}</span>
-        <span class="count" id="count-${cat.id}">0</span>
-        <button class="sidebar-delete-cat" data-cat="${cat.id}" title="Eliminar categoría" aria-label="Eliminar ${cat.id}">
+      </span>
+      ${getCategoryIcon(cat.id)}
+      <span class="sidebar-cat-label">${cat.id}</span>
+      <span class="count" id="count-${cat.id}">0</span>
+      <button class="sidebar-delete-cat" data-cat="${cat.id}" title="Eliminar categoría" aria-label="Eliminar ${cat.id}">
         <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-            <polyline points="3 6 5 6 21 6"/>
-            <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
-            <path d="M10 11v6M14 11v6"/>
-            <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
+          <polyline points="3 6 5 6 21 6"/>
+          <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+          <path d="M10 11v6M14 11v6"/>
+          <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
         </svg>
-        </button>
+      </button>
     </div>
-    `).join('');
+  `).join('');
 
   sidebar.innerHTML = `
     <span class="sidebar-section-label">Vistas</span>
-    <button class="sidebar-item ${currentFilter === 'all' ? 'active' : ''}" data-filter="all">
+    <button class="sidebar-item ${currentFilter === 'all' && currentView === 'templates' ? 'active' : ''}" data-filter="all">
       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
         <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
         <rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
       </svg>
       Todos los templates
       <span class="count" id="count-all">0</span>
+    </button>
+
+    <button class="sidebar-item ${currentView === 'saved' ? 'active' : ''}" id="sidebarSavedBtn">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
+        <polyline points="17 21 17 13 7 13 7 21"/>
+        <polyline points="7 3 7 8 15 8"/>
+      </svg>
+      Scripts guardados
+      <span class="count" id="count-saved">0</span>
     </button>
 
     <div class="sidebar-divider"></div>
@@ -54,34 +63,39 @@ function renderSidebar() {
     ${catItems}
   `;
 
-  // Re-bind filters tras regenerar el DOM
-    sidebar.querySelectorAll('[data-filter]').forEach(el => {
-        el.addEventListener('click', () => setFilter(el.dataset.filter));
-        // Soporte teclado para los divs de categoría
-        if (el.tagName === 'DIV') {
-            el.addEventListener('keydown', e => {
-            if (e.key === 'Enter' || e.key === ' ') setFilter(el.dataset.filter);
-            });
-        }
-    });
+  // Re-bind filters
+  sidebar.querySelectorAll('[data-filter]').forEach(el => {
+    el.addEventListener('click', () => setFilter(el.dataset.filter));
+    if (el.tagName === 'DIV') {
+      el.addEventListener('keydown', e => {
+        if (e.key === 'Enter' || e.key === ' ') setFilter(el.dataset.filter);
+      });
+    }
+  });
+
+  // Botón "Scripts guardados"
+  document.getElementById('sidebarSavedBtn').addEventListener('click', () => setSavedView());
+
   // Botón nueva categoría
   document.getElementById('addCategoryBtn').addEventListener('click', () => {
     buildCategoryModal();
     openModal('categoryModal');
   });
 
-  // Marcar activo
-  highlightActiveFilter();
+  // Botones borrar categoría
   sidebar.querySelectorAll('.sidebar-delete-cat').forEach(btn => {
     btn.addEventListener('click', e => {
-        e.stopPropagation(); // no activar el filtro
-        openDeleteCatModal(btn.dataset.cat);
+      e.stopPropagation();
+      openDeleteCatModal(btn.dataset.cat);
     });
-   });
+  });
 
+  highlightActiveFilter();
   renderHelpCats();
   initSidebarDrag();
+  updateCounts();
 }
+
 
 // ─── RENDER FILTER BAR ────────────────────────────────────────────────────────
 function renderFilterBar() {
@@ -100,20 +114,30 @@ function renderFilterBar() {
   });
 }
 
+
 // ─── HIGHLIGHT ACTIVE FILTER ──────────────────────────────────────────────────
 function highlightActiveFilter() {
   document.querySelectorAll('.sidebar-item').forEach(el => {
-    el.classList.toggle('active', el.dataset.filter === currentFilter);
+    el.classList.toggle('active', el.dataset.filter === currentFilter && currentView === 'templates');
   });
+  const savedBtn = document.getElementById('sidebarSavedBtn');
+  if (savedBtn) savedBtn.classList.toggle('active', currentView === 'saved');
+
   document.querySelectorAll('.filter-chip').forEach(el => {
     el.classList.toggle('active', el.dataset.filter === currentFilter);
   });
 }
 
-// ─── SET FILTER ───────────────────────────────────────────────────────────────
+
+// ─── SET FILTER (vista templates) ─────────────────────────────────────────────
 function setFilter(filter) {
+  currentView   = 'templates';
   currentFilter = filter;
   highlightActiveFilter();
+
+  document.getElementById('filterBar').classList.remove('hidden');
+  document.getElementById('templatesGrid').classList.remove('hidden');
+  document.getElementById('savedViewer').classList.add('hidden');
 
   const titles = { all: 'Todos los templates' };
   document.getElementById('pageTitle').textContent = titles[filter] || filter;
@@ -125,16 +149,186 @@ function setFilter(filter) {
   renderGrid();
 }
 
+
+// ─── SET SAVED VIEW ───────────────────────────────────────────────────────────
+function setSavedView() {
+  currentView = 'saved';
+  highlightActiveFilter();
+
+  document.getElementById('filterBar').classList.add('hidden');
+  document.getElementById('templatesGrid').classList.add('hidden');
+  document.getElementById('savedViewer').classList.remove('hidden');
+
+  document.getElementById('pageTitle').textContent    = 'Scripts guardados';
+  document.getElementById('pageSubtitle').textContent = 'Scripts generados y guardados desde los templates';
+
+  renderSavedViewer();
+}
+
+
+// ─── RENDER SAVED VIEWER ──────────────────────────────────────────────────────
+function renderSavedViewer() {
+  const viewer = document.getElementById('savedViewer');
+
+  if (!savedScripts.length) {
+    viewer.innerHTML = `
+      <div class="saved-empty">
+        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
+          <polyline points="17 21 17 13 7 13 7 21"/>
+          <polyline points="7 3 7 8 15 8"/>
+        </svg>
+        <p>Aún no has guardado ningún script. Genera uno desde un template y pulsa <strong>Guardar</strong>.</p>
+      </div>`;
+    return;
+  }
+
+  viewer.innerHTML = `<div class="saved-list" id="savedList"></div>`;
+  const list = document.getElementById('savedList');
+
+  savedScripts.forEach(s => {
+    const card = document.createElement('div');
+    card.className = 'saved-card';
+    card.dataset.filename = s.filename;
+
+    const color = getCategoryColor(s.category);
+
+    card.innerHTML = `
+      <div class="saved-card-header">
+        <div class="saved-card-icon" style="background:${color.bg}; color:${color.accent}">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
+            <polyline points="17 21 17 13 7 13 7 21"/>
+          </svg>
+        </div>
+        <div class="saved-card-info">
+          <div class="saved-card-name">${s.templateName}</div>
+          <div class="saved-card-meta">
+            <span>${s.category || 'Sin categoría'}</span>
+            <span class="meta-sep">·</span>
+            <span>${s.savedAt}</span>
+          </div>
+        </div>
+        <div class="saved-card-actions">
+          <button class="saved-card-btn btn-copy-saved" title="Copiar script" aria-label="Copiar script">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <rect x="9" y="9" width="13" height="13" rx="2"/>
+              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+            </svg>
+          </button>
+          <button class="saved-card-btn btn-del" title="Eliminar script" aria-label="Eliminar script">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <polyline points="3 6 5 6 21 6"/>
+              <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+            </svg>
+          </button>
+          <svg class="saved-card-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <polyline points="6 9 12 15 18 9"/>
+          </svg>
+        </div>
+      </div>
+      <div class="saved-card-body">
+        <pre class="saved-card-script" id="script-${s.filename}">Cargando…</pre>
+        <div class="saved-card-footer">
+          <button class="btn-copy btn-copy-saved-footer">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <rect x="9" y="9" width="13" height="13" rx="2"/>
+              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+            </svg>
+            Copiar
+          </button>
+          <button class="btn-download btn-dl-saved">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+              <polyline points="7 10 12 15 17 10"/>
+              <line x1="12" y1="15" x2="12" y2="3"/>
+            </svg>
+            Descargar .txt
+          </button>
+        </div>
+      </div>`;
+
+    // Toggle expand + lazy load del contenido
+    card.querySelector('.saved-card-header').addEventListener('click', async e => {
+      if (e.target.closest('button:not(.saved-card-header)')) return;
+      const isExpanded = card.classList.contains('expanded');
+      card.classList.toggle('expanded', !isExpanded);
+      if (!isExpanded) await loadSavedContent(s.filename);
+    });
+
+    // Copiar desde header
+    card.querySelector('.btn-copy-saved').addEventListener('click', async e => {
+      e.stopPropagation();
+      const content = await getSavedContent(s.filename);
+      navigator.clipboard.writeText(content).then(() => showToast('Script copiado'));
+    });
+
+    // Eliminar
+    card.querySelector('.btn-del').addEventListener('click', e => {
+      e.stopPropagation();
+      openDeleteSavedModal(s);
+    });
+
+    // Copiar desde footer
+    card.querySelector('.btn-copy-saved-footer').addEventListener('click', () => {
+      const pre = document.getElementById(`script-${s.filename}`);
+      navigator.clipboard.writeText(pre.textContent).then(() => showToast('Script copiado'));
+    });
+
+    // Descargar
+    card.querySelector('.btn-dl-saved').addEventListener('click', () => {
+      const pre  = document.getElementById(`script-${s.filename}`);
+      const blob = new Blob([pre.textContent], { type: 'text/plain' });
+      const a    = document.createElement('a');
+      a.href     = URL.createObjectURL(blob);
+      a.download = s.filename;
+      a.click();
+    });
+
+    list.appendChild(card);
+  });
+}
+
+
+// ─── LAZY LOAD SAVED CONTENT ──────────────────────────────────────────────────
+const _savedCache = {};
+
+async function getSavedContent(filename) {
+  if (_savedCache[filename]) return _savedCache[filename];
+  const res  = await fetch(`./saved/${filename}`);
+  const text = await res.text();
+  // Stripa la primera línea de metadatos (## template:… | …)
+  const lines = text.split('\n');
+  const content = lines[0].startsWith('##') ? lines.slice(1).join('\n').trimStart() : text;
+  _savedCache[filename] = content;
+  return content;
+}
+
+async function loadSavedContent(filename) {
+  const pre = document.getElementById(`script-${filename}`);
+  if (!pre || pre.textContent !== 'Cargando…') return;
+  try {
+    pre.textContent = await getSavedContent(filename);
+  } catch {
+    pre.textContent = '— Error al cargar el archivo —';
+  }
+}
+
+
 // ─── UPDATE COUNTS ────────────────────────────────────────────────────────────
 function updateCounts() {
-  const countEl = document.getElementById('count-all');
-  if (countEl) countEl.textContent = templates.length;
+  const countAll = document.getElementById('count-all');
+  if (countAll) countAll.textContent = templates.length;
+
+  const countSaved = document.getElementById('count-saved');
+  if (countSaved) countSaved.textContent = savedScripts.length;
 
   categories.forEach(cat => {
     const el = document.getElementById(`count-${cat.id}`);
     if (el) el.textContent = templates.filter(t => t.category === cat.id).length;
   });
 }
+
 
 // ─── RENDER GRID ──────────────────────────────────────────────────────────────
 function renderGrid() {
@@ -183,54 +377,53 @@ function renderGrid() {
     card.setAttribute('aria-label', `Abrir template ${t.name}`);
 
     card.innerHTML = `
-        <div class="card-header">
-            <div class="card-icon">${getCategoryIcon(t.category)}</div>
-            <span class="card-badge">${t.category}</span>
-            <div class="card-actions">
-            <button class="card-edit-btn" data-id="${t.id}" aria-label="Editar template" title="Editar">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
-                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
-                </svg>
-            </button>
-            <button class="card-delete-btn" data-id="${t.id}" aria-label="Borrar template" title="Borrar">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                <polyline points="3 6 5 6 21 6"/>
-                <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
-                <path d="M10 11v6M14 11v6"/>
-                <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
-                </svg>
-            </button>
-            </div>
-        </div>
-        <div class="card-name">${t.name}</div>
-        <div class="card-desc">${t.description}</div>
-        <div class="card-footer">
-            <div class="card-vars">
-            ${dots}
-            <span style="margin-left:4px">${vars.length} variable${vars.length !== 1 ? 's' : ''}</span>
-            </div>
-            <span class="card-arrow">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                <path d="M5 12h14M12 5l7 7-7 7"/>
+      <div class="card-header">
+        <div class="card-icon">${getCategoryIcon(t.category)}</div>
+        <span class="card-badge">${t.category}</span>
+        <div class="card-actions">
+          <button class="card-edit-btn" data-id="${t.id}" aria-label="Editar template" title="Editar">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+              <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
             </svg>
-            </span>
-        </div>`;
+          </button>
+          <button class="card-delete-btn" data-id="${t.id}" aria-label="Borrar template" title="Borrar">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <polyline points="3 6 5 6 21 6"/>
+              <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+              <path d="M10 11v6M14 11v6"/>
+              <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+      <div class="card-name">${t.name}</div>
+      <div class="card-desc">${t.description}</div>
+      <div class="card-footer">
+        <div class="card-vars">
+          ${dots}
+          <span style="margin-left:4px">${vars.length} variable${vars.length !== 1 ? 's' : ''}</span>
+        </div>
+        <span class="card-arrow">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <path d="M5 12h14M12 5l7 7-7 7"/>
+          </svg>
+        </span>
+      </div>`;
 
     card.addEventListener('click', () => openFormModal(t));
     card.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') openFormModal(t); });
     card.querySelector('.card-edit-btn').addEventListener('click', e => {
-        e.stopPropagation();
-        openEditModal(t);
+      e.stopPropagation(); openEditModal(t);
     });
     card.querySelector('.card-delete-btn').addEventListener('click', e => {
-        e.stopPropagation();
-        openDeleteModal(t);
+      e.stopPropagation(); openDeleteModal(t);
     });
 
     grid.appendChild(card);
   });
 }
+
 
 // ─── OPEN FORM MODAL ──────────────────────────────────────────────────────────
 function openFormModal(template) {
@@ -263,6 +456,7 @@ function openFormModal(template) {
   openModal('formModal');
 }
 
+
 // ─── GENERATE SCRIPT ──────────────────────────────────────────────────────────
 function generateScript() {
   if (!currentTemplate) return;
@@ -277,6 +471,7 @@ function generateScript() {
   closeModal('formModal');
   openModal('outputModal');
 }
+
 
 // ─── OPEN EDIT MODAL ──────────────────────────────────────────────────────────
 function openEditModal(template) {
@@ -297,13 +492,33 @@ function buildRawCfg(template) {
   return `# name: ${template.name}\n# category: ${template.category}\n# description: ${template.description}\n\n${template.content}`;
 }
 
+
+// ─── DELETE SAVED MODAL ───────────────────────────────────────────────────────
+function openDeleteSavedModal(saved) {
+  document.getElementById('deleteSavedModalName').textContent = saved.templateName;
+  document.getElementById('confirmDeleteSavedBtn').onclick = async () => {
+    try {
+      const res    = await fetch(`/api/saved/${encodeURIComponent(saved.filename)}`, { method: 'DELETE' });
+      const result = await res.json();
+      if (!res.ok) { showToast(result.error || 'Error al borrar', true); return; }
+    } catch {
+      showToast('No se pudo conectar con el servidor', true); return;
+    }
+    delete _savedCache[saved.filename];
+    savedScripts = savedScripts.filter(s => s.filename !== saved.filename);
+    closeModal('deleteSavedModal');
+    updateCounts();
+    renderSavedViewer();
+    showToast(`Script "${saved.templateName}" eliminado`);
+  };
+  openModal('deleteSavedModal');
+}
+
+
 // ─── MODAL HELPERS ────────────────────────────────────────────────────────────
-function openModal(id)  {
-  document.getElementById(id).classList.add('open');
-}
-function closeModal(id) {
-  document.getElementById(id).classList.remove('open');
-}
+function openModal(id)  { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
 function showToast(msg, isError = false) {
   const toast = document.getElementById('toast');
   const dot   = document.getElementById('toastDot');
@@ -314,11 +529,10 @@ function showToast(msg, isError = false) {
 }
 
 function openDeleteModal(template) {
-  const modal = document.getElementById('deleteModal');
   document.getElementById('deleteModalName').textContent = template.name;
   document.getElementById('confirmDeleteBtn').onclick = async () => {
     try {
-      const res = await fetch(`/api/templates/${template.id}.cfg`, { method: 'DELETE' });
+      const res    = await fetch(`/api/templates/${encodeURIComponent(template.id + '.cfg')}`, { method: 'DELETE' });
       const result = await res.json();
       if (!res.ok) { showToast(result.error || 'Error al borrar', true); return; }
     } catch {
@@ -334,14 +548,10 @@ function openDeleteModal(template) {
 }
 
 function renderHelpCats() {
-  // Actualiza ambos paneles de ayuda (import y edit modal)
   document.querySelectorAll('.help-cats').forEach(container => {
     container.innerHTML = categories.map(cat => {
       const color = getCategoryColor(cat.id);
-      return `<span class="cat-chip" style="
-        background: ${color.bg};
-        color: ${color.accent};
-      ">${cat.id}</span>`;
+      return `<span class="cat-chip" style="background:${color.bg}; color:${color.accent}">${cat.id}</span>`;
     }).join('');
   });
 }

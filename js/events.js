@@ -17,16 +17,33 @@ document.getElementById('downloadBtn').addEventListener('click', () => {
   const text = document.getElementById('scriptOutput').textContent;
   const name = (currentTemplate ? currentTemplate.name.replace(/[^a-z0-9]/gi, '_').toLowerCase() : 'script') + '.txt';
   const blob = new Blob([text], { type: 'text/plain' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
   a.href = url; a.download = name; a.click();
   URL.revokeObjectURL(url);
   showToast('Archivo descargado');
 });
 
 
+// ─── SAVE SCRIPT ──────────────────────────────────────────────────────────────
+document.getElementById('saveScriptBtn').addEventListener('click', async () => {
+  if (!currentTemplate) return;
+  const content = document.getElementById('scriptOutput').textContent;
+  const ok = await saveScript(
+    currentTemplate.name,
+    currentTemplate.category,
+    content
+  );
+  if (ok) {
+    updateCounts();
+    showToast(`Script "${currentTemplate.name}" guardado`);
+  }
+});
+
+
 // ─── IMPORT ───────────────────────────────────────────────────────────────────
 let _pendingZipFile = null;
+
 
 function resetImportModal() {
   _pendingZipFile = null;
@@ -46,6 +63,7 @@ function resetImportModal() {
   document.getElementById('tabHelp').classList.add('hidden');
 }
 
+
 document.getElementById('importBtn').addEventListener('click', () => {
   resetImportModal();
   openModal('importModal');
@@ -55,7 +73,7 @@ document.getElementById('browseBtn').addEventListener('click', () => {
   document.getElementById('cfgFileInput').click();
 });
 
-document.getElementById('dropZone').addEventListener('click', (e) => {
+document.getElementById('dropZone').addEventListener('click', e => {
   if (e.target.id !== 'browseBtn') document.getElementById('cfgFileInput').click();
 });
 
@@ -69,7 +87,7 @@ document.getElementById('cfgFileInput').addEventListener('change', e => {
 });
 
 const dropZone = document.getElementById('dropZone');
-dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drag-over'); });
+dropZone.addEventListener('dragover',  e => { e.preventDefault(); dropZone.classList.add('drag-over'); });
 dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
 dropZone.addEventListener('drop', e => {
   e.preventDefault();
@@ -80,6 +98,7 @@ dropZone.addEventListener('drop', e => {
   else if (file.name.endsWith('.cfg')) loadCfgFile(file);
   else showToast('Solo se admiten archivos .cfg o .zip', true);
 });
+
 
 function loadCfgFile(file) {
   _pendingZipFile = null;
@@ -96,6 +115,7 @@ function loadCfgFile(file) {
   };
   reader.readAsText(file);
 }
+
 
 async function loadZipFile(file) {
   if (!window.JSZip) {
@@ -139,27 +159,29 @@ async function loadZipFile(file) {
     </li>`).join('');
 }
 
+
 // Tabs editor/ayuda (import modal)
 document.querySelectorAll('.editor-tab').forEach(tab => {
   tab.addEventListener('click', () => {
     document.querySelectorAll('.editor-tab').forEach(t => t.classList.remove('active'));
     tab.classList.add('active');
     document.getElementById('tabEditor').classList.toggle('hidden', tab.dataset.tab !== 'editor');
-    document.getElementById('tabHelp').classList.toggle('hidden', tab.dataset.tab !== 'help');
+    document.getElementById('tabHelp').classList.toggle('hidden',   tab.dataset.tab !== 'help');
   });
 });
+
 
 // Confirmar carga
 document.getElementById('importConfirmBtn').addEventListener('click', async () => {
 
   // ── Modo ZIP ──────────────────────────────────────────────────────────────
   if (_pendingZipFile) {
-    const zip = await JSZip.loadAsync(_pendingZipFile);
+    const zip      = await JSZip.loadAsync(_pendingZipFile);
     const cfgFiles = Object.keys(zip.files).filter(n => n.endsWith('.cfg') && !zip.files[n].dir);
     let ok = 0, skipped = 0;
 
     for (const name of cfgFiles) {
-      const raw = await zip.files[name].async('string');
+      const raw      = await zip.files[name].async('string');
       const filename = name.split('/').pop();
       try {
         const res = await fetch('/api/templates', {
@@ -195,7 +217,7 @@ document.getElementById('importConfirmBtn').addEventListener('click', async () =
   if (!meta) { showToast('Faltan metadatos: name y category son obligatorios', true); return; }
 
   const filenameBase = meta.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
-  const filename = `${meta.category.toLowerCase()}-${filenameBase}.cfg`;
+  const filename     = `${meta.category.toLowerCase()}-${filenameBase}.cfg`;
 
   try {
     const res = await fetch('/api/templates', {
@@ -229,7 +251,9 @@ document.getElementById('formModalBody').addEventListener('keydown', e => {
 // ─── SEARCH ───────────────────────────────────────────────────────────────────
 document.getElementById('globalSearch').addEventListener('input', e => {
   searchQuery = e.target.value.trim();
-  renderGrid();
+  // Si está en vista saved, filtrar ahí; si no, el grid
+  if (currentView === 'saved') renderSavedViewer();
+  else renderGrid();
 });
 
 
@@ -253,7 +277,7 @@ document.querySelectorAll('[data-edit-tab]').forEach(tab => {
     document.querySelectorAll('[data-edit-tab]').forEach(t => t.classList.remove('active'));
     tab.classList.add('active');
     document.getElementById('editTabEditor').classList.toggle('hidden', tab.dataset.editTab !== 'editor');
-    document.getElementById('editTabHelp').classList.toggle('hidden', tab.dataset.editTab !== 'help');
+    document.getElementById('editTabHelp').classList.toggle('hidden',   tab.dataset.editTab !== 'help');
   });
 });
 
@@ -264,7 +288,7 @@ document.getElementById('editSaveBtn').addEventListener('click', async () => {
   if (!raw) { showToast('El editor está vacío', true); return; }
 
   const filename = document.getElementById('editFilename').textContent;
-  const parsed = parseCfg(raw, filename);
+  const parsed   = parseCfg(raw, filename);
   if (!parsed) { showToast('Faltan metadatos: name y category son obligatorios', true); return; }
 
   try {
@@ -280,7 +304,7 @@ document.getElementById('editSaveBtn').addEventListener('click', async () => {
   }
 
   const oldId = filename.replace('.cfg', '');
-  const idx = templates.findIndex(t => t.id === oldId);
+  const idx   = templates.findIndex(t => t.id === oldId);
   if (idx !== -1) templates[idx] = parsed;
   else templates.push(parsed);
 
@@ -295,6 +319,7 @@ document.getElementById('editSaveBtn').addEventListener('click', async () => {
 let _selectedIcon  = 'folder';
 let _selectedColor = COLOR_OPTIONS[0].id;
 
+
 function buildCategoryModal() {
   _selectedIcon  = 'folder';
   _selectedColor = COLOR_OPTIONS[0].id;
@@ -304,10 +329,10 @@ function buildCategoryModal() {
   iconPicker.innerHTML = '';
   Object.entries(ICON_SVG).forEach(([key, svg]) => {
     const btn = document.createElement('button');
-    btn.type = 'button';
+    btn.type      = 'button';
     btn.className = 'icon-picker-btn';
     btn.dataset.icon = key;
-    btn.title = key;
+    btn.title     = key;
     btn.innerHTML = svg.replace('width="13" height="13"', 'width="16" height="16"');
     if (key === _selectedIcon) btn.classList.add('selected');
     btn.addEventListener('click', () => {
@@ -322,10 +347,10 @@ function buildCategoryModal() {
   colorPicker.innerHTML = '';
   COLOR_OPTIONS.forEach(opt => {
     const btn = document.createElement('button');
-    btn.type = 'button';
+    btn.type      = 'button';
     btn.className = 'color-picker-btn';
     btn.dataset.color = opt.id;
-    btn.title = opt.label;
+    btn.title     = opt.label;
     btn.style.setProperty('--swatch-color', opt.accent);
     if (opt.id === _selectedColor) btn.classList.add('selected');
     btn.addEventListener('click', () => {
@@ -363,11 +388,12 @@ document.getElementById('confirmCategoryBtn').addEventListener('click', async ()
   showToast(`Categoría "${name}" creada`);
 });
 
+
 function openDeleteCatModal(catId) {
   document.getElementById('deleteCatModalName').textContent = catId;
   document.getElementById('confirmDeleteCatBtn').onclick = async () => {
     try {
-      const res = await fetch(`/api/categories/${encodeURIComponent(catId)}`, { method: 'DELETE' });
+      const res    = await fetch(`/api/categories/${encodeURIComponent(catId)}`, { method: 'DELETE' });
       const result = await res.json();
       if (!res.ok) { showToast(result.error || 'Error al borrar', true); return; }
     } catch {
@@ -388,9 +414,9 @@ function openDeleteCatModal(catId) {
 
 // ─── THEME TOGGLE ─────────────────────────────────────────────────────────────
 (function () {
-  const btn = document.querySelector('[data-theme-toggle]');
+  const btn  = document.querySelector('[data-theme-toggle]');
   const root = document.documentElement;
-  let dark = root.getAttribute('data-theme') === 'dark';
+  let dark   = root.getAttribute('data-theme') === 'dark';
 
   function applyTheme() {
     root.setAttribute('data-theme', dark ? 'dark' : 'light');
@@ -459,6 +485,7 @@ function initSidebarDrag() {
   });
 }
 
+
 async function saveCategoryOrder() {
   try {
     await fetch('/api/categories/reorder', {
@@ -479,7 +506,7 @@ document.getElementById('exportBtn').addEventListener('click', async () => {
     const url  = URL.createObjectURL(blob);
     const a    = document.createElement('a');
     a.href     = url;
-    a.download = `scriptforge-export-${new Date().toISOString().slice(0,10)}.zip`;
+    a.download = `scriptforge-export-${new Date().toISOString().slice(0, 10)}.zip`;
     a.click();
     URL.revokeObjectURL(url);
     showToast(`ZIP exportado con ${templates.length} templates`);

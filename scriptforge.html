@@ -11,12 +11,12 @@
 </head>
 <body>
 
+
 <!-- ============================================================
      TOP BAR
      ============================================================ -->
 <header class="topbar">
   <a href="#" class="topbar-brand">
-    <!-- SVG Logo -->
     <svg width="22" height="22" viewBox="0 0 22 22" fill="none" aria-label="ScriptForge">
       <rect x="1" y="1" width="20" height="20" rx="5" stroke="currentColor" stroke-width="1.5"/>
       <path d="M6 8l3 3-3 3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
@@ -35,7 +35,7 @@
       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
     </button>
     <button class="btn-ghost" id="exportBtn" title="Exportar todos los templates" style="white-space:nowrap">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
     </button>
     <button class="btn-primary" id="importBtn">
       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12l7 7 7-7"/></svg>
@@ -43,6 +43,7 @@
     </button>
   </div>
 </header>
+
 
 <!-- ============================================================
      APP LAYOUT
@@ -63,17 +64,17 @@
       </div>
     </div>
 
-    <!-- FILTER CHIPS -->
-    <div class="filter-bar" id="filterBar">
-      <!-- Renderizado dinámicamente por ui.js → renderFilterBar() -->
-    </div>
+    <!-- FILTER CHIPS — oculto en vista saved -->
+    <div class="filter-bar" id="filterBar"></div>
 
-    <!-- TEMPLATE GRID -->
-    <div class="templates-grid" id="templatesGrid">
-      <!-- Cards injected by JS -->
-    </div>
+    <!-- TEMPLATE GRID — visible en vista templates -->
+    <div class="templates-grid" id="templatesGrid"></div>
+
+    <!-- SAVED SCRIPT VIEWER — visible solo en vista saved -->
+    <div id="savedViewer" class="hidden"></div>
   </main>
 </div>
+
 
 <!-- ============================================================
      MODAL: FORMULARIO DE VARIABLES
@@ -90,9 +91,7 @@
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6L6 18M6 6l12 12"/></svg>
       </button>
     </div>
-    <div class="modal-body" id="formModalBody">
-      <!-- Fields injected by JS -->
-    </div>
+    <div class="modal-body" id="formModalBody"></div>
     <div class="modal-footer">
       <button class="btn-ghost" onclick="closeModal('formModal')">Cancelar</button>
       <button class="btn-success" id="generateBtn">
@@ -102,6 +101,7 @@
     </div>
   </div>
 </div>
+
 
 <!-- ============================================================
      MODAL: OUTPUT SCRIPT
@@ -140,10 +140,19 @@
     </div>
     <div class="modal-footer">
       <button class="btn-ghost" onclick="closeModal('outputModal'); openModal('formModal')">← Volver al formulario</button>
+      <button class="btn-save" id="saveScriptBtn">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
+          <polyline points="17 21 17 13 7 13 7 21"/>
+          <polyline points="7 3 7 8 15 8"/>
+        </svg>
+        Guardar
+      </button>
       <button class="btn-ghost" onclick="closeModal('outputModal')">Cerrar</button>
     </div>
   </div>
 </div>
+
 
 <!-- ============================================================
      MODAL: IMPORTAR TEMPLATE
@@ -162,29 +171,22 @@
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6L6 18M6 6l12 12"/></svg>
       </button>
     </div>
-
     <div class="modal-body">
-
-      <!-- DROP ZONE -->
       <div class="drop-zone" id="dropZone">
         <input type="file" id="cfgFileInput" accept=".cfg,.zip" hidden>
         <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
         <p class="drop-zone-text">Arrastra un archivo <strong>.cfg</strong> o <strong>.zip</strong> aquí</p>
         <button class="btn-ghost" id="browseBtn" type="button">Seleccionar archivo</button>
       </div>
-
-      <!-- EDITOR TABS — ocultos cuando se carga un ZIP -->
       <div id="cfgEditorSection">
         <div class="editor-tabs">
           <button class="editor-tab active" data-tab="editor">Editor</button>
           <button class="editor-tab" data-tab="help">Ayuda</button>
         </div>
-
         <div class="editor-panel" id="tabEditor">
           <textarea class="import-textarea" id="cfgEditor" spellcheck="false"
             placeholder="# name: Mi Template&#10;# category: Management&#10;# description: Descripción del template.&#10;&#10;sysname {HOSTNAME}"></textarea>
         </div>
-
         <div class="editor-panel hidden" id="tabHelp">
           <div class="help-content">
             <p class="help-title">Formato del archivo .cfg</p>
@@ -204,15 +206,11 @@ interface {INTERFAZ}
           </div>
         </div>
       </div>
-
-      <!-- ZIP PREVIEW — visible solo cuando se carga un ZIP -->
       <div id="zipPreviewSection" class="hidden">
         <p class="help-title" style="margin-bottom:var(--space-2)">Contenido del ZIP</p>
         <ul class="zip-file-list" id="zipFileList"></ul>
       </div>
-
     </div>
-
     <div class="modal-footer">
       <span class="import-filename" id="importFilename"></span>
       <button class="btn-ghost" onclick="closeModal('importModal')">Cancelar</button>
@@ -223,6 +221,7 @@ interface {INTERFAZ}
     </div>
   </div>
 </div>
+
 
 <!-- ============================================================
      MODAL: EDITAR TEMPLATE
@@ -241,22 +240,17 @@ interface {INTERFAZ}
         <div class="modal-subtitle" id="editModalSubtitle"></div>
       </div>
       <button class="modal-close" onclick="closeModal('editModal')" aria-label="Cerrar">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-          <path d="M18 6L6 18M6 6l12 12"/>
-        </svg>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6L6 18M6 6l12 12"/></svg>
       </button>
     </div>
-
     <div class="modal-body">
       <div class="editor-tabs">
         <button class="editor-tab active" data-edit-tab="editor">Editor</button>
         <button class="editor-tab" data-edit-tab="help">Ayuda</button>
       </div>
-
       <div class="editor-panel" id="editTabEditor">
         <textarea class="import-textarea" id="cfgEditEditor" spellcheck="false"></textarea>
       </div>
-
       <div class="editor-panel hidden" id="editTabHelp">
         <div class="help-content">
           <p class="help-title">Formato del archivo .cfg</p>
@@ -270,15 +264,12 @@ sysname {HOSTNAME}
 interface {INTERFAZ}
  ip address {IP} {MASCARA}</pre>
           <p class="help-title">Categorías disponibles</p>
-          <div class="help-cats">
-            <!-- Generado dinámicamente por ui.js → renderHelpCats() -->
-          </div>
+          <div class="help-cats"></div>
           <p class="help-title">Variables</p>
           <p class="help-desc">Escribe las variables entre llaves en mayúsculas: <code>{NOMBRE_VARIABLE}</code>.</p>
         </div>
       </div>
     </div>
-
     <div class="modal-footer">
       <span class="import-filename" id="editFilename"></span>
       <button class="btn-ghost" onclick="closeModal('editModal')">Cancelar</button>
@@ -293,6 +284,7 @@ interface {INTERFAZ}
     </div>
   </div>
 </div>
+
 
 <!-- ============================================================
      MODAL: NUEVA CATEGORÍA
@@ -310,9 +302,7 @@ interface {INTERFAZ}
         <div class="modal-subtitle">Elige nombre e icono</div>
       </div>
       <button class="modal-close" onclick="closeModal('categoryModal')" aria-label="Cerrar">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-          <path d="M18 6L6 18M6 6l12 12"/>
-        </svg>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6L6 18M6 6l12 12"/></svg>
       </button>
     </div>
     <div class="modal-body">
@@ -342,8 +332,9 @@ interface {INTERFAZ}
   </div>
 </div>
 
+
 <!-- ============================================================
-     MODAL: CONFIRMAR BORRADO
+     MODAL: CONFIRMAR BORRADO DE TEMPLATE
      ============================================================ -->
 <div class="modal-overlay" id="deleteModal" role="dialog" aria-modal="true">
   <div class="modal" style="max-width:420px">
@@ -361,9 +352,7 @@ interface {INTERFAZ}
         <div class="modal-subtitle">Esta acción no se puede deshacer</div>
       </div>
       <button class="modal-close" onclick="closeModal('deleteModal')" aria-label="Cerrar">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-          <path d="M18 6L6 18M6 6l12 12"/>
-        </svg>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6L6 18M6 6l12 12"/></svg>
       </button>
     </div>
     <div class="modal-body">
@@ -387,6 +376,7 @@ interface {INTERFAZ}
   </div>
 </div>
 
+
 <!-- ============================================================
      MODAL: CONFIRMAR BORRADO DE CATEGORÍA
      ============================================================ -->
@@ -406,9 +396,7 @@ interface {INTERFAZ}
         <div class="modal-subtitle">Esta acción no se puede deshacer</div>
       </div>
       <button class="modal-close" onclick="closeModal('deleteCatModal')" aria-label="Cerrar">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-          <path d="M18 6L6 18M6 6l12 12"/>
-        </svg>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6L6 18M6 6l12 12"/></svg>
       </button>
     </div>
     <div class="modal-body">
@@ -432,11 +420,57 @@ interface {INTERFAZ}
   </div>
 </div>
 
+
+<!-- ============================================================
+     MODAL: CONFIRMAR BORRADO DE SCRIPT GUARDADO
+     ============================================================ -->
+<div class="modal-overlay" id="deleteSavedModal" role="dialog" aria-modal="true">
+  <div class="modal" style="max-width:420px">
+    <div class="modal-header">
+      <div class="modal-icon" style="background:var(--color-error-highlight); color:var(--color-error)">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="3 6 5 6 21 6"/>
+          <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+          <path d="M10 11v6M14 11v6"/>
+          <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
+        </svg>
+      </div>
+      <div>
+        <div class="modal-title">Eliminar script guardado</div>
+        <div class="modal-subtitle">Esta acción no se puede deshacer</div>
+      </div>
+      <button class="modal-close" onclick="closeModal('deleteSavedModal')" aria-label="Cerrar">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6L6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <p style="font-size:var(--text-sm); color:var(--color-text-muted); line-height:1.6">
+        ¿Seguro que quieres eliminar el script
+        <strong style="color:var(--color-text)" id="deleteSavedModalName"></strong>?
+        El archivo <code style="font-family:var(--font-mono); font-size:var(--text-xs); color:var(--color-error)">.txt</code>
+        se borrará permanentemente de disco.
+      </p>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-ghost" onclick="closeModal('deleteSavedModal')">Cancelar</button>
+      <button class="btn-delete" id="confirmDeleteSavedBtn">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <polyline points="3 6 5 6 21 6"/>
+          <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+        </svg>
+        Eliminar
+      </button>
+    </div>
+  </div>
+</div>
+
+
 <!-- TOAST -->
 <div class="toast" id="toast" role="status" aria-live="polite">
   <span class="toast-dot" id="toastDot"></span>
   <span id="toastMsg"></span>
 </div>
+
 
 <!-- ============================================================
      JAVASCRIPT
@@ -454,3 +488,4 @@ interface {INTERFAZ}
   });
 </script>
 </body>
+</html>

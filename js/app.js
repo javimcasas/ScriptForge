@@ -1,21 +1,22 @@
 // ─── APP STATE ────────────────────────────────────────────────────────────────
-let templates  = [];
-let categories = [];
+let templates    = [];
+let categories   = [];
+let savedScripts = [];
 let currentFilter   = 'all';
 let currentTemplate = null;
+let currentView     = 'templates'; // 'templates' | 'saved'
 let searchQuery     = '';
+
 
 async function loadTemplates() {
   try {
-    // Cargar categorías primero (las necesitan los templates al renderizar)
-    const catRes = await fetch('/api/categories');
+    const catRes  = await fetch('/api/categories');
     const catData = await catRes.json();
     categories = catData.categories || [];
 
-    // Cargar templates
-    const tplRes = await fetch('/api/templates');
+    const tplRes    = await fetch('/api/templates');
     const { files } = await tplRes.json();
-    const results = await Promise.all(
+    const results   = await Promise.all(
       files.map(file =>
         fetch(`./templates/${file}`)
           .then(r => r.text())
@@ -24,17 +25,23 @@ async function loadTemplates() {
       )
     );
     templates = results.filter(Boolean);
+
+    const savedRes  = await fetch('/api/saved');
+    const savedData = await savedRes.json();
+    savedScripts = savedData.saved || [];
+
   } catch (e) {
     console.error('Error cargando datos:', e);
-    templates = []; categories = [];
+    templates = []; categories = []; savedScripts = [];
   }
 
   renderHelpCats();
 }
 
+
 function parseCfg(text, filename) {
   const lines = text.replace(/\r/g, '').split('\n');
-  const meta = {};
+  const meta  = {};
   const contentLines = [];
   let inContent = false;
 
@@ -50,17 +57,38 @@ function parseCfg(text, filename) {
 
   if (!meta.name || !meta.category) return null;
 
-  // Normalizar categoría contra las existentes (case-insensitive)
   const matchedCat = categories.find(
     c => c.id.toLowerCase() === meta.category.toLowerCase()
   );
   const resolvedCategory = matchedCat ? matchedCat.id : meta.category;
 
   return {
-    id: filename.replace('.cfg', ''),
-    name: meta.name,
-    category: resolvedCategory,
+    id:          filename.replace('.cfg', ''),
+    name:        meta.name,
+    category:    resolvedCategory,
     description: meta.description || '',
-    content: contentLines.join('\n').trim()
+    content:     contentLines.join('\n').trim()
   };
+}
+
+
+async function saveScript(templateName, category, content) {
+  const savedAt  = new Date().toISOString().slice(0, 16).replace('T', ' ');
+  const base     = templateName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+  const filename = `${base}-${Date.now()}.txt`;
+
+  try {
+    const res = await fetch('/api/saved', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ filename, templateName, category, content, savedAt })
+    });
+    const result = await res.json();
+    if (!res.ok) { showToast(result.error || 'Error al guardar', true); return false; }
+  } catch {
+    showToast('No se pudo conectar con el servidor', true); return false;
+  }
+
+  savedScripts.unshift({ filename, templateName, category, savedAt });
+  return true;
 }
