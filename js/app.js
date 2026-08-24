@@ -18,7 +18,7 @@ async function loadTemplates() {
     const { files } = await tplRes.json();
     const results   = await Promise.all(
       files.map(file =>
-        fetch(`./templates/${file}`)
+        fetch(`/api/templates/${file}`)
           .then(r => r.text())
           .then(text => parseCfg(text, file))
           .catch(() => null)

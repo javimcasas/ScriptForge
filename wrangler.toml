@@ -1,0 +1,6 @@
+name = "scriptforge"
+pages_build_output_dir = "."
+
+[[kv_namespaces]]
+binding = "scriptforge_kv"
+id = "11bc44da7e6e4b2586e0d79c25abab6c"
