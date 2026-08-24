@@ -1,0 +1,14 @@
+node_modules
+.git
+.github
+src
+wrangler.toml
+package.json
+package-lock.json
+server.py
+start.bat
+stop.bat
+requirements.txt
+README.md
+LICENSE
+.gitignore
