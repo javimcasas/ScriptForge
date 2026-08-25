@@ -1,6 +1,6 @@
 name = "scriptforge"
 main = "src/index.js"
-compatibility_date = "2026-08-01"
+compatibility_date = "2026-08-24"
 
 [assets]
 directory = "."
@@ -8,5 +8,5 @@ binding = "ASSETS"
 run_worker_first = true
 
 [[kv_namespaces]]
-binding = "scriptforge_kv"
+binding = "SCRIPTFORGE_KV"
 id = "11bc44da7e6e4b2586e0d79c25abab6c"
