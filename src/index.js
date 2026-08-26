@@ -73,6 +73,107 @@ async function getSavedIndex(env, userId) {
   return raw ? JSON.parse(raw) : [];
 }
 
+// ─── AI generation: reveal the user's own key from smartmatrix-auth via
+// Service Binding (a plain fetch() to another *.workers.dev domain from
+// inside a Worker is blocked by Cloudflare -- error 1042 -- so we bind the
+// two Workers directly instead of going through public DNS), then call the
+// chosen provider server-side and hand back plain .cfg text.
+async function authFetch(env, path, rawToken) {
+  const req = new Request(`https://smartmatrix-auth.internal${path}`, {
+    headers: { Authorization: `Bearer ${rawToken}` }
+  });
+  return env.AUTH.fetch(req);
+}
+
+async function revealApiKey(env, provider, rawToken) {
+  const res = await authFetch(env, `/api/me/keys/${provider}/reveal`, rawToken);
+  if (!res.ok) return null;
+  const data = await res.json();
+  return data.apiKey || null;
+}
+
+async function callPerplexity(apiKey, prompt, model) {
+  const res = await fetch("https://api.perplexity.ai/chat/completions", {
+    method: "POST",
+    headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
+    body: JSON.stringify({
+      model,
+      messages: [{ role: "user", content: prompt }],
+      max_tokens: 3000,
+      temperature: 0.2
+    })
+  });
+  if (!res.ok) throw new Error(`Perplexity ${res.status}: ${(await res.text()).slice(0, 300)}`);
+  const data = await res.json();
+  return data.choices[0].message.content;
+}
+
+async function callOpenAI(apiKey, prompt, model) {
+  const res = await fetch("https://api.openai.com/v1/chat/completions", {
+    method: "POST",
+    headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
+    body: JSON.stringify({
+      model,
+      messages: [{ role: "user", content: prompt }],
+      max_tokens: 3000,
+      temperature: 0.2
+    })
+  });
+  if (!res.ok) throw new Error(`OpenAI ${res.status}: ${(await res.text()).slice(0, 300)}`);
+  const data = await res.json();
+  return data.choices[0].message.content;
+}
+
+async function callAnthropic(apiKey, prompt, model) {
+  const res = await fetch("https://api.anthropic.com/v1/messages", {
+    method: "POST",
+    headers: { "x-api-key": apiKey, "anthropic-version": "2023-06-01", "Content-Type": "application/json" },
+    body: JSON.stringify({
+      model,
+      max_tokens: 3000,
+      temperature: 0.2,
+      messages: [{ role: "user", content: prompt }]
+    })
+  });
+  if (!res.ok) throw new Error(`Anthropic ${res.status}: ${(await res.text()).slice(0, 300)}`);
+  const data = await res.json();
+  return data.content[0].text;
+}
+
+async function callAI(provider, apiKey, prompt, model) {
+  if (provider === "openai") return callOpenAI(apiKey, prompt, model);
+  if (provider === "anthropic") return callAnthropic(apiKey, prompt, model);
+  return callPerplexity(apiKey, prompt, model);
+}
+
+function sanitizeCfgOutput(text) {
+  let out = text.trim();
+  // Strip markdown code fences if the model added them despite instructions.
+  out = out.replace(/^```[a-z]*\n?/i, "").replace(/```\s*$/i, "").trim();
+  return out;
+}
+
+function buildTemplatePrompt(description, categoryIds) {
+  return `You generate configuration script templates for the ScriptForge tool (network device config templates with placeholder variables).
+
+TASK: Write ONE template for: "${description}"
+
+OUTPUT FORMAT (this exact structure, nothing else, no markdown code fences, no explanations before or after):
+
+# name: <short human-readable name for this template>
+# category: <one of: ${categoryIds.join(", ")}>
+# description: <one-sentence description of what this template configures>
+
+<the actual configuration script, one command per line>
+
+RULES:
+1. Any value the user must supply per-device (hostname, IP, VLAN ID, interface name, password, etc.) MUST be written as a placeholder variable in UPPERCASE_SNAKE_CASE wrapped in curly braces, e.g. {HOSTNAME}, {VLAN_ID}, {INTERFACE_NAME}.
+2. Reuse the SAME placeholder name every time the same value is needed again in the script.
+3. Pick the category that best matches the request from the allowed list above. If none fit well, use "Otros".
+4. Do not invent extra metadata lines beyond name/category/description.
+5. Do not wrap the output in \`\`\` code fences or add any commentary -- respond with the raw template only.`;
+}
+
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
@@ -113,6 +214,7 @@ export default {
     }
 
     const userId = user.userId;
+    const rawToken = getCookie(request, "sf_session");
 
     if (path === "/api/categories" && method === "GET") {
       return json({ categories: await getCategories(env, userId) });
@@ -238,6 +340,43 @@ export default {
       const index = (await getSavedIndex(env, userId)).filter(f => f !== filename);
       await env.SCRIPTFORGE_KV.put(kvKey(userId, "saved:index"), JSON.stringify(index));
       return json({ ok: true });
+    }
+
+    // ─── AI: providers status + template generation ──────────────────
+    if (path === "/api/ai/providers" && method === "GET") {
+      try {
+        const res = await authFetch(env, "/api/me/keys", rawToken);
+        const bodyText = await res.text();
+        if (!res.ok) return json({ error: `smartmatrix-auth returned ${res.status}`, upstream_body: bodyText.slice(0, 500) }, 502);
+        return json(JSON.parse(bodyText));
+      } catch (e) {
+        return json({ error: `Could not reach smartmatrix-auth: ${e.message}` }, 502);
+      }
+    }
+
+    if (path === "/api/ai/generate-template" && method === "POST") {
+      const { description, provider, model, categories: categoryIds } = await request.json();
+      if (!description || !description.trim()) return json({ error: "description is required" }, 400);
+      const chosenProvider = provider || "perplexity";
+
+      const apiKey = await revealApiKey(env, chosenProvider, rawToken);
+      if (!apiKey) {
+        return json({ error: `No ${chosenProvider} API key configured. Add it in your SmartMatrix profile.` }, 400);
+      }
+
+      const cats = (categoryIds && categoryIds.length) ? categoryIds : (await getCategories(env, userId)).map(c => c.id);
+      const prompt = buildTemplatePrompt(description.trim(), cats);
+
+      try {
+        const raw = await callAI(chosenProvider, apiKey, prompt, model);
+        const content = sanitizeCfgOutput(raw);
+        if (!content.startsWith("#")) {
+          return json({ error: "The AI response didn't match the expected template format. Try again or rephrase your request." }, 502);
+        }
+        return json({ content });
+      } catch (e) {
+        return json({ error: `Generation failed: ${e.message}` }, 500);
+      }
     }
 
     return json({ error: "Not found" }, 404);

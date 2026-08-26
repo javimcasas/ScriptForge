@@ -10,3 +10,7 @@ run_worker_first = true
 [[kv_namespaces]]
 binding = "SCRIPTFORGE_KV"
 id = "11bc44da7e6e4b2586e0d79c25abab6c"
+
+[[services]]
+binding = "AUTH"
+service = "smartmatrix-auth"

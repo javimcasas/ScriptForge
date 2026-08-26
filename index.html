@@ -88,6 +88,59 @@
 
 
 <!-- ============================================================
+     MODAL: GENERATE WITH AI
+     ============================================================ -->
+<div class="modal-overlay" id="aiModal" role="dialog" aria-modal="true" aria-labelledby="aiModalTitle">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-icon" style="background:var(--color-gold-highlight, var(--color-warning-highlight)); color:var(--color-gold)">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M12 2l1.8 5.6L19 9l-5.2 1.4L12 16l-1.8-5.6L5 9l5.2-1.4z" fill="currentColor"/></svg>
+      </div>
+      <div>
+        <div class="modal-title" id="aiModalTitle">Generate with AI</div>
+        <div class="modal-subtitle">Describe what you need and review the template before saving</div>
+      </div>
+      <button class="modal-close" onclick="closeModal('aiModal')" aria-label="Cerrar">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6L6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div id="aiNoProviderWarning" class="info-box hidden">
+        No AI key configured. Add one in your <a href="https://smartmatrix.javimcasas.workers.dev/perfil.html" target="_blank" rel="noopener" style="color:var(--color-primary); font-weight:600;">SmartMatrix profile</a> to use this.
+      </div>
+      <div id="aiFormWrapper">
+        <div class="form-field">
+          <label class="form-label" for="aiDescriptionInput">What do you need? <span class="label-required">*</span></label>
+          <textarea class="import-textarea" id="aiDescriptionInput" style="min-height:100px" placeholder="e.g. Configure an OSPF area on a Cisco router with a router-id and network statements"></textarea>
+        </div>
+        <div class="form-field" style="display:grid; grid-template-columns:1fr 1fr; gap:var(--space-3);">
+          <div>
+            <label class="form-label" for="aiProviderSelect">Provider</label>
+            <select class="category-select" id="aiProviderSelect"></select>
+          </div>
+          <div>
+            <label class="form-label" for="aiModelSelect">Model</label>
+            <select class="category-select" id="aiModelSelect"></select>
+          </div>
+        </div>
+        <div id="aiLoading" class="hidden" style="display:flex; align-items:center; gap:var(--space-2); color:var(--color-text-muted); font-size:var(--text-xs);">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="animation:spin 1s linear infinite"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
+          Generating template…
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-ghost" onclick="closeModal('aiModal')">Cancel</button>
+      <button class="btn-success" id="aiGenerateConfirmBtn">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M12 2l1.8 5.6L19 9l-5.2 1.4L12 16l-1.8-5.6L5 9l5.2-1.4z" fill="currentColor"/></svg>
+        Generate
+      </button>
+    </div>
+  </div>
+</div>
+
+
+<!-- ============================================================
      MODAL: FORMULARIO DE VARIABLES
      ============================================================ -->
 <div class="modal-overlay" id="formModal" role="dialog" aria-modal="true" aria-labelledby="formModalTitle">
@@ -545,6 +598,7 @@ interface {INTERFAZ}
 <script src="./js/app.js"></script>
 <script src="./js/ui.js"></script>
 <script src="./js/events.js"></script>
+<script src="./js/ai.js"></script>
 <script>
   loadTemplates().then(() => {
     renderSidebar();

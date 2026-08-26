@@ -6,6 +6,8 @@
    at matching breakpoints without needing !important.
 */
 
+@keyframes spin { to { transform: rotate(360deg); } }
+
 /* ── Mobile menu button: hidden on desktop ── */
 .menu-btn { display: none; flex-shrink: 0; }
 
@@ -84,6 +86,8 @@
   .filter-chip { flex-shrink: 0; }
 
   .config-bar { flex-direction: column; }
+
+  #aiModal .form-field[style*="grid-template-columns"] { grid-template-columns: 1fr !important; }
 }
 
 /* ============================================================
