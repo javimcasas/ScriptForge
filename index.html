@@ -17,6 +17,10 @@
      TOP BAR
      ============================================================ -->
 <header class="topbar">
+  <button class="btn-icon menu-btn" id="menuBtn" aria-label="Abrir menú" title="Menú">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+  </button>
+
   <a href="#" class="topbar-brand">
     <svg width="22" height="22" viewBox="0 0 22 22" fill="none" aria-label="ScriptForge">
       <rect x="1" y="1" width="20" height="20" rx="5" stroke="currentColor" stroke-width="1.5"/>
@@ -38,12 +42,18 @@
     <button class="btn-ghost" id="exportBtn" title="Exportar todos los templates" style="white-space:nowrap">
       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
     </button>
+    <button class="btn-ghost" id="aiGenerateBtn" title="Generar template con IA">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M12 2l1.8 5.6L19 9l-5.2 1.4L12 16l-1.8-5.6L5 9l5.2-1.4z" fill="currentColor"/><path d="M19 15l0.7 2.1L22 18l-2.3 0.9L19 21l-0.7-2.1L16 18l2.3-0.9z" fill="currentColor"/></svg>
+      <span class="btn-label">Generate with AI</span>
+    </button>
     <button class="btn-primary" id="importBtn">
       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12l7 7 7-7"/></svg>
-      Importar Template
+      <span class="btn-label">Importar Template</span>
     </button>
   </div>
 </header>
+
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
 
 
 <!-- ============================================================
@@ -149,7 +159,6 @@
         </svg>
         Guardar
       </button>
-      <button class="btn-ghost" onclick="closeModal('outputModal')">Cerrar</button>
     </div>
   </div>
 </div>

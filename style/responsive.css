@@ -1,11 +1,124 @@
 /* ============================================================
    RESPONSIVE
+   ============================================================
+   Loaded last (see scriptforge.css @import order), so equal-
+   specificity rules here win over base/sidebar/template/modals
+   at matching breakpoints without needing !important.
+*/
+
+/* ── Mobile menu button: hidden on desktop ── */
+.menu-btn { display: none; flex-shrink: 0; }
+
+/* ── Sidebar overlay (click-outside-to-close on mobile) ── */
+.sidebar-overlay {
+  position: fixed; inset: 0; z-index: 140;
+  background: oklch(0.1 0 0 / 0.5);
+  opacity: 0; pointer-events: none;
+  transition: opacity 200ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+.sidebar-overlay.show { opacity: 1; pointer-events: all; }
+
+@media (min-width: 901px) {
+  .sidebar-overlay { display: none !important; }
+}
+
+/* ============================================================
+   ≤ 900px — sidebar becomes an off-canvas drawer instead of
+   disappearing outright (keeps "Scripts guardados" and
+   categories reachable on tablets/phones).
+   ============================================================ */
+@media (max-width: 900px) {
+  .menu-btn { display: flex; }
+
+  .app-layout { position: relative; }
+
+  .sidebar {
+    position: fixed; top: 52px; left: 0; bottom: 0;
+    width: 260px; max-width: 82vw;
+    z-index: 150;
+    transform: translateX(-100%);
+    transition: transform 220ms cubic-bezier(0.16, 1, 0.3, 1);
+    box-shadow: var(--shadow-xl);
+  }
+  .sidebar.mobile-open { transform: translateX(0); }
+
+  .main-content { padding: var(--space-5) var(--space-4); }
+}
+
+/* ============================================================
+   ≤ 768px — topbar reflow: search moves to its own full-width
+   row instead of vanishing, so it stays usable on tablets.
    ============================================================ */
 @media (max-width: 768px) {
-  .sidebar { display: none; }
-  .main-content { padding: var(--space-5) var(--space-4); }
-  .topbar { padding: 0 var(--space-4); }
-  .topbar-center { display: none; }
+  .topbar {
+    flex-wrap: wrap;
+    height: auto; min-height: 52px;
+    padding: var(--space-2) var(--space-4);
+    row-gap: var(--space-2);
+  }
+  .topbar-center {
+    display: block;
+    order: 3;
+    flex-basis: 100%;
+    max-width: 100%;
+  }
+  .topbar-actions { flex-wrap: wrap; justify-content: flex-end; }
+}
+
+/* ============================================================
+   ≤ 640px — page header stacks, filter chips scroll instead of
+   wrapping into a wall of buttons, action icons always visible
+   (no hover on touch), grid already collapses to 1 column via
+   its own auto-fill minmax.
+   ============================================================ */
+@media (max-width: 640px) {
+  .page-header { flex-direction: column; align-items: stretch; gap: var(--space-3); }
+
+  .filter-bar {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    padding-bottom: var(--space-2);
+    -webkit-overflow-scrolling: touch;
+  }
+  .filter-bar::-webkit-scrollbar { height: 3px; }
+  .filter-chip { flex-shrink: 0; }
+
+  .config-bar { flex-direction: column; }
+}
+
+/* ============================================================
+   Touch devices: hover-revealed controls must stay visible,
+   since there's no hover state to reveal them with a tap.
+   ============================================================ */
+@media (hover: none) {
+  .card-edit-btn, .card-delete-btn, .card-arrow,
+  .sidebar-delete-cat {
+    opacity: 1;
+  }
+  .sidebar-drag-handle { display: none; } /* drag reordering isn't practical on touch */
+}
+
+/* ============================================================
+   ≤ 480px — modals become bottom sheets: full width, rounded
+   only on top, anchored to the bottom of the screen. `.modal`
+   here overrides `.output-modal`/`.import-modal`/`.edit-modal`
+   max-widths thanks to cascade order (equal specificity, this
+   file loads last), reinforced with the overlay-scoped selector.
+   ============================================================ */
+@media (max-width: 480px) {
+  .modal-overlay { padding: 0; align-items: flex-end; }
+  .modal-overlay .modal {
+    max-width: 100%; width: 100%;
+    max-height: 92dvh;
+    border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+  }
+
+  .btn-primary .btn-label,
+  #aiGenerateBtn .btn-label { display: none; }
+  .btn-primary, #aiGenerateBtn { padding: 0 var(--space-3); }
+
+  .modal-footer { flex-wrap: wrap; }
+  .modal-footer button { flex: 1; justify-content: center; }
 }
 
 /* ============================================================
@@ -26,3 +139,7 @@
 
 /* Highlighted var in output */
 .var-highlight { color: var(--color-orange); font-weight: 600; }
+
+/* ── AI generate button accent (distinct from ghost/primary) ── */
+#aiGenerateBtn { color: var(--color-gold); border-color: oklch(from var(--color-gold) l c h / 0.3); }
+#aiGenerateBtn:hover { background: var(--color-gold-highlight, var(--color-warning-highlight)); color: var(--color-gold); }
