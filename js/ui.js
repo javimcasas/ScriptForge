@@ -191,7 +191,7 @@ function setSavedView() {
 // actually reusable by whoever imports it, unlike an already-filled-in
 // saved script which only makes sense for the one device it was made for.
 let communityItems = [];
-let communityFilter = 'all';
+let communityCategoryQuery = '';
 let communityLikedIds = new Set();
 const _communityCache = {};
 
@@ -265,28 +265,49 @@ async function toggleCommunityLike(id) {
     if (item) item.likes = result.likes;
     if (result.liked) communityLikedIds.add(id);
     else communityLikedIds.delete(id);
-    renderCommunityViewer();
+    renderCommunityList();
   } catch {
     showToast('No se pudo conectar con el servidor', true);
   }
 }
 
+// Estructura fija (input de categoría + contenedor de la lista) para que
+// escribir en el filtro no pierda el foco al re-renderizar en cada tecla:
+// solo #communityList se reconstruye, el input nunca se recrea.
 function renderCommunityViewer() {
   ensureCommunityViewer();
   const viewer = document.getElementById('communityViewer');
 
-  const cats = [...new Set(communityItems.map(i => i.category))].sort();
-  const chips = cats.map(c =>
-    `<button class="filter-chip ${communityFilter === c ? 'active' : ''}" data-community-filter="${c}">${c}</button>`
-  ).join('');
-  const chipsBar = `
-    <div class="filter-bar" style="margin-bottom:12px">
-      <button class="filter-chip ${communityFilter === 'all' ? 'active' : ''}" data-community-filter="all">Todos</button>
-      ${chips}
-    </div>`;
+  viewer.innerHTML = `
+    <div class="community-cat-filter">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+      </svg>
+      <input type="text" id="communityCatInput" placeholder="Filtrar por categoría… (ej: VLAN, AAA)" autocomplete="off">
+    </div>
+    <div id="communityList"></div>
+  `;
+
+  const input = document.getElementById('communityCatInput');
+  input.value = communityCategoryQuery;
+  input.addEventListener('input', e => {
+    communityCategoryQuery = e.target.value;
+    renderCommunityList();
+  });
+
+  renderCommunityList();
+}
+
+function renderCommunityList() {
+  ensureCommunityViewer();
+  const list = document.getElementById('communityList');
+  if (!list) return;
 
   let filtered = communityItems;
-  if (communityFilter !== 'all') filtered = filtered.filter(i => i.category === communityFilter);
+  if (communityCategoryQuery.trim()) {
+    const q = communityCategoryQuery.trim().toLowerCase();
+    filtered = filtered.filter(i => i.category.toLowerCase().includes(q));
+  }
   if (searchQuery) {
     const q = searchQuery.toLowerCase();
     filtered = filtered.filter(i =>
@@ -299,76 +320,70 @@ function renderCommunityViewer() {
   filtered = [...filtered].sort((a, b) => (b.likes || 0) - (a.likes || 0));
 
   if (!filtered.length) {
-    viewer.innerHTML = chipsBar + `
+    list.innerHTML = `
       <div class="saved-empty">
         <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
           <circle cx="9" cy="7" r="4"/><path d="M2 21v-2a4 4 0 0 1 4-4h6a4 4 0 0 1 4 4v2"/>
           <circle cx="17" cy="7" r="3"/><path d="M22 21v-2a3 3 0 0 0-2.5-2.96"/>
         </svg>
         <p>${communityItems.length
-          ? 'No hay resultados para esa búsqueda.'
+          ? 'No hay resultados para ese filtro.'
           : 'Todavía nadie ha subido ningún template a Community. Sube uno desde el icono ↑ de cualquier tarjeta.'
         }</p>
       </div>`;
-  } else {
-    const cards = filtered.map(item => {
-      const color = getCategoryColor(item.category);
-      const date = item.uploadedAt ? new Date(item.uploadedAt).toLocaleDateString() : '';
-      const liked = communityLikedIds.has(item.id);
-      return `
-        <div class="saved-card" data-community-id="${item.id}">
-          <div class="saved-card-header">
-            <div class="saved-card-icon" style="background:${color.bg}; color:${color.accent}">
-              ${getCategoryIcon(item.category)}
-            </div>
-            <div class="saved-card-info">
-              <div class="saved-card-name">${item.name}</div>
-              <div class="saved-card-meta">
-                <span class="saved-card-template-tag">${item.category}</span>
-                <span class="meta-sep">·</span>
-                <span>${item.uploadedBy || 'anónimo'}</span>
-                <span class="meta-sep">·</span>
-                <span>${date}</span>
-              </div>
-            </div>
-            <div class="saved-card-actions">
-              <button class="community-like-btn ${liked ? 'liked' : ''}" title="${liked ? 'Quitar like' : 'Dar like'}" aria-label="Dar like">
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"/>
-                </svg>
-                <span class="like-count">${item.likes || 0}</span>
-              </button>
-              <button class="saved-card-btn btn-import-community" title="Añadir a mis templates" aria-label="Añadir a mis templates">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                  <polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
-                </svg>
-              </button>
-              <svg class="saved-card-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                <polyline points="6 9 12 15 18 9"/>
-              </svg>
-            </div>
-          </div>
-          <div class="saved-card-preview">
-            <p>${item.description || 'Sin descripción'}</p>
-          </div>
-          <div class="saved-card-body">
-            <pre class="saved-card-script" id="community-script-${item.id}">Cargando…</pre>
-          </div>
-        </div>`;
-    }).join('');
-    viewer.innerHTML = chipsBar + `<div class="saved-list">${cards}</div>`;
+    return;
   }
 
-  viewer.querySelectorAll('[data-community-filter]').forEach(btn => {
-    btn.addEventListener('click', () => {
-      communityFilter = btn.dataset.communityFilter;
-      renderCommunityViewer();
-    });
-  });
+  const cards = filtered.map(item => {
+    const color = getCategoryColor(item.category);
+    const date = item.uploadedAt ? new Date(item.uploadedAt).toLocaleDateString() : '';
+    const liked = communityLikedIds.has(item.id);
+    return `
+      <div class="saved-card" data-community-id="${item.id}">
+        <div class="saved-card-header">
+          <div class="saved-card-icon" style="background:${color.bg}; color:${color.accent}">
+            ${getCategoryIcon(item.category)}
+          </div>
+          <div class="saved-card-info">
+            <div class="saved-card-name">${item.name}</div>
+            <div class="saved-card-meta">
+              <span class="saved-card-template-tag">${item.category}</span>
+              <span class="meta-sep">·</span>
+              <span>${item.uploadedBy || 'anónimo'}</span>
+              <span class="meta-sep">·</span>
+              <span>${date}</span>
+            </div>
+          </div>
+          <div class="saved-card-actions">
+            <button class="community-like-btn ${liked ? 'liked' : ''}" title="${liked ? 'Quitar like' : 'Dar like'}" aria-label="Dar like">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"/>
+              </svg>
+              <span class="like-count">${item.likes || 0}</span>
+            </button>
+            <button class="saved-card-btn btn-import-community" title="Añadir a mis templates" aria-label="Añadir a mis templates">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                <polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+              </svg>
+            </button>
+            <svg class="saved-card-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <polyline points="6 9 12 15 18 9"/>
+            </svg>
+          </div>
+        </div>
+        <div class="saved-card-preview">
+          <p>${item.description || 'Sin descripción'}</p>
+        </div>
+        <div class="saved-card-body">
+          <pre class="saved-card-script" id="community-script-${item.id}">Cargando…</pre>
+        </div>
+      </div>`;
+  }).join('');
+  list.innerHTML = `<div class="saved-list">${cards}</div>`;
 
   // Click en la tarjeta (fuera de botones) expande y muestra los comandos del template.
-  viewer.querySelectorAll('[data-community-id]').forEach(card => {
+  list.querySelectorAll('[data-community-id]').forEach(card => {
     const id = card.dataset.communityId;
     card.querySelector('.saved-card-header').addEventListener('click', async e => {
       if (e.target.closest('button')) return;
@@ -378,7 +393,7 @@ function renderCommunityViewer() {
     });
   });
 
-  viewer.querySelectorAll('.community-like-btn').forEach(btn => {
+  list.querySelectorAll('.community-like-btn').forEach(btn => {
     btn.addEventListener('click', async e => {
       e.stopPropagation();
       const card = btn.closest('[data-community-id]');
@@ -386,7 +401,7 @@ function renderCommunityViewer() {
     });
   });
 
-  viewer.querySelectorAll('.btn-import-community').forEach(btn => {
+  list.querySelectorAll('.btn-import-community').forEach(btn => {
     btn.addEventListener('click', async e => {
       e.stopPropagation();
       const card = btn.closest('[data-community-id]');

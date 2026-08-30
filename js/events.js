@@ -274,7 +274,7 @@ document.getElementById('formModalBody').addEventListener('keydown', e => {
 document.getElementById('globalSearch').addEventListener('input', e => {
   searchQuery = e.target.value.trim();
   if (currentView === 'saved') renderSavedViewer();
-  else if (currentView === 'community') renderCommunityViewer();
+  else if (currentView === 'community') renderCommunityList();
   else renderGrid();
 });
 

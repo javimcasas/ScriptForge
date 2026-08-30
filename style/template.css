@@ -190,3 +190,28 @@
   line-clamp: 2;
   overflow: hidden;
 }
+
+/* ── Community: filtro de categoría por texto libre ──
+   Sustituye a los chips auto-generados (poco fiables al depender de
+   texto libre de cada usuario) por un input que el propio usuario escribe. */
+.community-cat-filter {
+  display: flex; align-items: center; gap: var(--space-2);
+  height: 36px; padding: 0 var(--space-3);
+  background: var(--color-surface-offset);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  color: var(--color-text-faint);
+  max-width: 320px;
+  margin-bottom: var(--space-3);
+  transition: border-color var(--transition-interactive), box-shadow var(--transition-interactive);
+}
+.community-cat-filter:has(input:focus) {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px oklch(from var(--color-primary) l c h / 0.15);
+}
+.community-cat-filter svg { flex-shrink: 0; }
+.community-cat-filter input {
+  flex: 1; border: none; background: none; outline: none;
+  font-size: var(--text-xs); color: var(--color-text);
+}
+.community-cat-filter input::placeholder { color: var(--color-text-faint); }
