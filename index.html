@@ -317,11 +317,12 @@
 sysname {HOSTNAME}
 !
 interface {INTERFACE}
- ip address {IP} {SUBNET_MASK}</pre>
+ ip address {IP} {SUBNET_MASK, 255.255.255.0}</pre>
             <p class="help-title">Available categories</p>
             <div class="help-cats"></div>
             <p class="help-title">Variables</p>
             <p class="help-desc">Write variables in uppercase wrapped in curly braces: <code>{VARIABLE_NAME}</code>. A form field will be generated for each one.</p>
+            <p class="help-desc">You can optionally add an example value the first time a variable appears, separated by a comma: <code>{SUBNET_MASK, 255.255.255.0}</code>. It's shown as a placeholder hint in the form field — it's never required, and it's automatically stripped when you download the template for SmartConfigure. If the same variable appears again later in the script, just write <code>{SUBNET_MASK}</code> without the example. If a variable is accidentally given two different examples, only the first one is used.</p>
           </div>
         </div>
       </div>
@@ -381,11 +382,12 @@ interface {INTERFACE}
 sysname {HOSTNAME}
 !
 interface {INTERFACE}
- ip address {IP} {SUBNET_MASK}</pre>
+ ip address {IP} {SUBNET_MASK, 255.255.255.0}</pre>
           <p class="help-title">Available categories</p>
           <div class="help-cats"></div>
           <p class="help-title">Variables</p>
           <p class="help-desc">Write variables in uppercase wrapped in curly braces: <code>{VARIABLE_NAME}</code>.</p>
+          <p class="help-desc">You can optionally add an example value the first time a variable appears, separated by a comma: <code>{SUBNET_MASK, 255.255.255.0}</code>. It's shown as a placeholder hint in the form field — it's never required, and it's automatically stripped when you download the template for SmartConfigure. If the same variable appears again later in the script, just write <code>{SUBNET_MASK}</code> without the example. If a variable is accidentally given two different examples, only the first one is used.</p>
         </div>
       </div>
     </div>
