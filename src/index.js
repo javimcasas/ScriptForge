@@ -5,7 +5,7 @@ const DEFAULT_CATEGORIES = [
   { id: "SNMP", icon: "activity" },
   { id: "Management", icon: "settings" },
   { id: "Trunks", icon: "list" },
-  { id: "Otros", icon: "more-horizontal" }
+  { id: "Other", icon: "more-horizontal" }
 ];
 
 function b64url(bytes) {
@@ -184,7 +184,7 @@ OUTPUT FORMAT (this exact structure, nothing else, no markdown code fences, no e
 RULES:
 1. Any value the user must supply per-device (hostname, IP, VLAN ID, interface name, password, etc.) MUST be written as a placeholder variable in UPPERCASE_SNAKE_CASE wrapped in curly braces, e.g. {HOSTNAME}, {VLAN_ID}, {INTERFACE_NAME}.
 2. Reuse the SAME placeholder name every time the same value is needed again in the script.
-3. Pick the category that best matches the request from the allowed list above. If none fit well, use "Otros".
+3. Pick the category that best matches the request from the allowed list above. If none fit well, use "Other".
 4. Do not invent extra metadata lines beyond name/category/description.
 5. Do not wrap the output in \`\`\` code fences or add any commentary -- respond with the raw template only.`;
 }
@@ -195,12 +195,12 @@ export default {
     const path = url.pathname;
     const method = request.method;
 
-    // 1. Handoff de sesión desde SmartMatrix (?sso=...)
+    // 1. Session handoff from SmartMatrix (?sso=...)
     const ssoParam = url.searchParams.get("sso");
     if (ssoParam) {
       const payload = await verifyToken(ssoParam, env.SSO_SECRET);
       if (!payload) {
-        return new Response("Token de sesión inválido o caducado", { status: 401 });
+        return new Response("Invalid or expired session token", { status: 401 });
       }
       const sessionToken = await signToken(
         { userId: payload.userId, email: payload.email, exp: Date.now() + 1000 * 60 * 60 * 24 * 30 },
@@ -216,11 +216,11 @@ export default {
       });
     }
 
-    // 2. Identificar usuario por cookie local
+    // 2. Identify user from local cookie
     const user = await getUserFromCookie(request, env);
 
     if (!user) {
-      if (path.startsWith("/api/")) return json({ error: "No autenticado" }, 401);
+      if (path.startsWith("/api/")) return json({ error: "Not authenticated" }, 401);
       return Response.redirect("https://smartmatrix.javimcasas.workers.dev/", 302);
     }
 
@@ -239,10 +239,10 @@ export default {
       const name = (data.id || "").trim();
       const icon = (data.icon || "folder").trim();
       const color = (data.color || "").trim();
-      if (!name) return json({ error: "El nombre es obligatorio" }, 400);
+      if (!name) return json({ error: "Name is required" }, 400);
       const cats = await getCategories(env, userId);
       if (cats.some(c => c.id.toLowerCase() === name.toLowerCase())) {
-        return json({ error: "Ya existe esa categoría" }, 409);
+        return json({ error: "That category already exists" }, 409);
       }
       cats.push({ id: name, icon, color });
       await env.SCRIPTFORGE_KV.put(kvKey(userId, "categories"), JSON.stringify(cats));
@@ -264,7 +264,7 @@ export default {
       const catId = decodeURIComponent(path.replace("/api/categories/", ""));
       let cats = await getCategories(env, userId);
       if (!cats.some(c => c.id === catId)) {
-        return json({ error: `Categoría no encontrada: ${catId}` }, 404);
+        return json({ error: `Category not found: ${catId}` }, 404);
       }
       cats = cats.filter(c => c.id !== catId);
       await env.SCRIPTFORGE_KV.put(kvKey(userId, "categories"), JSON.stringify(cats));
@@ -278,7 +278,7 @@ export default {
       const data = await request.json();
       let filename = (data.filename || "").trim();
       const content = (data.content || "").trim();
-      if (!filename || !content) return json({ error: "filename y content son obligatorios" }, 400);
+      if (!filename || !content) return json({ error: "filename and content are required" }, 400);
       if (!filename.endsWith(".cfg")) filename += ".cfg";
       filename = filename.replace(/[\/\\]/g, "");
       await env.SCRIPTFORGE_KV.put(kvKey(userId, `template:${filename}`), content);
@@ -296,7 +296,7 @@ export default {
     if (path.startsWith("/api/templates/") && method === "DELETE") {
       const filename = decodeURIComponent(path.replace("/api/templates/", ""));
       const exists = await env.SCRIPTFORGE_KV.get(kvKey(userId, `template:${filename}`));
-      if (exists === null) return json({ error: `Archivo no encontrado: ${filename}` }, 404);
+      if (exists === null) return json({ error: `File not found: ${filename}` }, 404);
       await env.SCRIPTFORGE_KV.delete(kvKey(userId, `template:${filename}`));
       const index = (await getTemplatesIndex(env, userId)).filter(f => f !== filename);
       await env.SCRIPTFORGE_KV.put(kvKey(userId, "templates:index"), JSON.stringify(index));
@@ -336,7 +336,7 @@ export default {
       const customName = (data.customName || "").trim();
       let filename = (data.filename || "").trim();
       if (!templateName || !content || !filename) {
-        return json({ error: "templateName, filename y content son obligatorios" }, 400);
+        return json({ error: "templateName, filename and content are required" }, 400);
       }
       if (!filename.endsWith(".txt")) filename += ".txt";
       filename = filename.replace(/[\/\\]/g, "");
@@ -350,7 +350,7 @@ export default {
     if (path.startsWith("/api/saved/") && method === "DELETE") {
       const filename = decodeURIComponent(path.replace("/api/saved/", ""));
       const exists = await env.SCRIPTFORGE_KV.get(kvKey(userId, `saved:${filename}`));
-      if (exists === null) return json({ error: `Archivo no encontrado: ${filename}` }, 404);
+      if (exists === null) return json({ error: `File not found: ${filename}` }, 404);
       await env.SCRIPTFORGE_KV.delete(kvKey(userId, `saved:${filename}`));
       const index = (await getSavedIndex(env, userId)).filter(f => f !== filename);
       await env.SCRIPTFORGE_KV.put(kvKey(userId, "saved:index"), JSON.stringify(index));
@@ -372,7 +372,7 @@ export default {
     if (path === "/api/community/upload" && method === "POST") {
       const data = await request.json();
       const content = (data.content || "").trim();
-      if (!content) return json({ error: "content es obligatorio" }, 400);
+      if (!content) return json({ error: "content is required" }, 400);
 
       // Reuse the same "# name: / # category: / # description:" header the
       // rest of the app already relies on, so a community item round-trips
@@ -381,12 +381,12 @@ export default {
       const categoryMatch = content.match(/^# category:\s*(.+)$/m);
       const descMatch = content.match(/^# description:\s*(.+)$/m);
       if (!nameMatch || !categoryMatch) {
-        return json({ error: "El contenido no tiene los metadatos name/category" }, 400);
+        return json({ error: "The content is missing the name/category metadata" }, 400);
       }
 
-      // ─── Anti-duplicados: compara por contenido normalizado (name+category+
-      // cuerpo del script), no por texto exacto, para detectar el mismo
-      // template aunque cambie la descripción o los espacios en blanco.
+      // ─── Duplicate prevention: compare by normalized content (name+category+
+      // script body), not exact text, so the same template is detected even
+      // if the description or whitespace changes.
       const normalizedBody = content
         .split("\n")
         .filter(l => !l.match(/^# (name|category|description):/))
@@ -399,7 +399,7 @@ export default {
 
       const index = await getCommunityIndex(env);
       if (index.some(i => i.contentHash === contentHash)) {
-        return json({ error: "Este template ya está publicado en Community" }, 409);
+        return json({ error: "This template is already published in Community" }, 409);
       }
 
       const id = crypto.randomUUID();
@@ -425,7 +425,7 @@ export default {
       const id = decodeURIComponent(path.replace("/api/community/", "").replace("/like", ""));
       const index = await getCommunityIndex(env);
       const entry = index.find(i => i.id === id);
-      if (!entry) return json({ error: "Script de Community no encontrado" }, 404);
+      if (!entry) return json({ error: "Community script not found" }, 404);
 
       const liked = await getCommunityLikes(env, userId);
       const alreadyLiked = liked.includes(id);
@@ -439,11 +439,11 @@ export default {
     if (path.startsWith("/api/community/") && path.endsWith("/import") && method === "POST") {
       const id = decodeURIComponent(path.replace("/api/community/", "").replace("/import", ""));
       const content = await env.SCRIPTFORGE_KV.get(communityKey(`script:${id}`));
-      if (content === null) return json({ error: "Script de Community no encontrado" }, 404);
+      if (content === null) return json({ error: "Community script not found" }, 404);
 
       const index = await getCommunityIndex(env);
       const entry = index.find(i => i.id === id);
-      const baseName = (entry ? entry.category : "otros").toLowerCase().replace(/[^a-z0-9]+/g, "-");
+      const baseName = (entry ? entry.category : "other").toLowerCase().replace(/[^a-z0-9]+/g, "-");
       const nameSlug = (entry ? entry.name : "community").toLowerCase().replace(/[^a-z0-9]+/g, "-");
       let filename = `${baseName}-${nameSlug}.cfg`;
 
@@ -467,9 +467,9 @@ export default {
       const id = decodeURIComponent(path.replace("/api/community/", ""));
       const index = await getCommunityIndex(env);
       const entry = index.find(i => i.id === id);
-      if (!entry) return json({ error: "Script de Community no encontrado" }, 404);
+      if (!entry) return json({ error: "Community script not found" }, 404);
       if (entry.uploadedById !== userId && entry.uploadedBy !== user.email) {
-        return json({ error: "No puedes despublicar un template que no es tuyo" }, 403);
+        return json({ error: "You can't unpublish a template that isn't yours" }, 403);
       }
 
       const newIndex = index.filter(i => i.id !== id);
