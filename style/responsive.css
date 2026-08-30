@@ -95,7 +95,7 @@
    since there's no hover state to reveal them with a tap.
    ============================================================ */
 @media (hover: none) {
-  .card-edit-btn, .card-delete-btn, .card-arrow,
+  .card-download-btn, .card-upload-btn, .card-edit-btn, .card-delete-btn, .card-arrow,
   .sidebar-delete-cat {
     opacity: 1;
   }
