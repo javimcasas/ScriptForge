@@ -1,3 +1,33 @@
+// ─── VARIABLE PARSING (supports optional example: {VAR, example value}) ─────
+function escapeRegExp(str) {
+  return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+// Parses {VARIABLE_NAME} or {VARIABLE_NAME, example value} occurrences.
+// Returns an ordered, de-duplicated list of { name, example }. If the same
+// variable appears more than once, only the FIRST definition (with or
+// without an example) is kept — later ones are ignored to avoid conflicts.
+function parseTemplateVariables(content) {
+  const regex = /\{([^,}]+)(?:,([^}]*))?\}/g;
+  const seen = new Map();
+  let m;
+  while ((m = regex.exec(content)) !== null) {
+    const name = m[1].trim();
+    if (!name || seen.has(name)) continue;
+    const example = m[2] ? m[2].trim() : '';
+    seen.set(name, example);
+  }
+  return [...seen.entries()].map(([name, example]) => ({ name, example }));
+}
+
+// Strips the ", example value" part from every {VAR, example} occurrence,
+// leaving plain {VAR} placeholders — used when downloading a template for
+// SmartConfigure, which doesn't understand the example-value syntax.
+function stripVariableExamples(content) {
+  return content.replace(/\{([^,}]+),([^}]*)\}/g, (_, name) => `{${name.trim()}}`);
+}
+
+
 // ─── RENDER SIDEBAR ─────────────────────────────────────────────────────────────
 function renderSidebar() {
   const sidebar = document.getElementById('sidebar');
@@ -840,7 +870,7 @@ function renderGrid() {
 
   grid.innerHTML = '';
   filtered.forEach(t => {
-    const vars  = [...new Set((t.content.match(/\{([^}]+)\}/g) || []))];
+    const vars  = parseTemplateVariables(t.content);
     const dots  = vars.slice(0, 5).map(() => `<span class="var-dot"></span>`).join('');
     const color = getCategoryColor(t.category);
 
@@ -903,7 +933,7 @@ function renderGrid() {
     card.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') openFormModal(t); });
     card.querySelector('.card-download-btn').addEventListener('click', e => {
       e.stopPropagation();
-      const blob = new Blob([t.content], { type: 'text/plain' });
+      const blob = new Blob([stripVariableExamples(t.content)], { type: 'text/plain' });
       const a = document.createElement('a');
       a.href = URL.createObjectURL(blob);
       a.download = t.name.replace(/[^a-z0-9]/gi, '_').toLowerCase() + '.txt';
@@ -930,8 +960,7 @@ function renderGrid() {
 // ─── OPEN FORM MODAL ────────────────────────────────────────────────────────────────
 function openFormModal(template) {
   currentTemplate = template;
-  const vars = [...new Set((template.content.match(/\{([^}]+)\}/g) || []))]
-    .map(v => v.slice(1, -1));
+  const vars = parseTemplateVariables(template.content);
   const color = getCategoryColor(template.category);
 
   document.getElementById('formModalIcon').style.background = color.bg;
@@ -946,11 +975,11 @@ function openFormModal(template) {
   } else {
     body.innerHTML = vars.map(v => `
       <div class="form-field">
-        <label class="form-label" for="var-${v}">
-          ${v.replace(/_/g, ' ')}
+        <label class="form-label" for="var-${v.name}">
+          ${v.name.replace(/_/g, ' ')}
           <span class="label-required">*</span>
         </label>
-        <input class="form-input" id="var-${v}" data-var="${v}" placeholder="${v}" autocomplete="off">
+        <input class="form-input" id="var-${v.name}" data-var="${v.name}" placeholder="${v.example || v.name}" autocomplete="off">
       </div>`).join('');
     setTimeout(() => body.querySelector('.form-input')?.focus(), 220);
   }
@@ -963,9 +992,12 @@ function openFormModal(template) {
 function generateScript() {
   if (!currentTemplate) return;
   let output = currentTemplate.content;
-  document.querySelectorAll('#formModalBody .form-input').forEach(input => {
-    const val = input.value.trim() || `{${input.dataset.var}}`;
-    output = output.replaceAll(`{${input.dataset.var}}`, val);
+  const vars = parseTemplateVariables(currentTemplate.content);
+  vars.forEach(v => {
+    const input = document.getElementById(`var-${v.name}`);
+    const val = (input && input.value.trim()) || `{${v.name}}`;
+    const pattern = new RegExp(`\\{\\s*${escapeRegExp(v.name)}\\s*(?:,[^}]*)?\\}`, 'g');
+    output = output.replace(pattern, val);
   });
 
   document.getElementById('outputModalTitle').textContent = currentTemplate.name;
