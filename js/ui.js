@@ -1,4 +1,4 @@
-// ─── RENDER SIDEBAR ───────────────────────────────────────────────────────────
+// ─── RENDER SIDEBAR ─────────────────────────────────────────────────────────────
 function renderSidebar() {
   const sidebar = document.getElementById('sidebar');
 
@@ -49,6 +49,17 @@ function renderSidebar() {
       <span class="count" id="count-saved">0</span>
     </button>
 
+    <button class="sidebar-item ${currentView === 'community' ? 'active' : ''}" id="sidebarCommunityBtn">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="9" cy="7" r="4"/>
+        <path d="M2 21v-2a4 4 0 0 1 4-4h6a4 4 0 0 1 4 4v2"/>
+        <circle cx="17" cy="7" r="3"/>
+        <path d="M22 21v-2a3 3 0 0 0-2.5-2.96"/>
+      </svg>
+      Community
+      <span class="count" id="count-community">0</span>
+    </button>
+
     <div class="sidebar-divider"></div>
 
     <div class="sidebar-section-header">
@@ -76,6 +87,9 @@ function renderSidebar() {
   // Botón "Scripts guardados"
   document.getElementById('sidebarSavedBtn').addEventListener('click', () => setSavedView());
 
+  // Botón "Community"
+  document.getElementById('sidebarCommunityBtn').addEventListener('click', () => setCommunityView());
+
   // Botón nueva categoría
   document.getElementById('addCategoryBtn').addEventListener('click', () => {
     buildCategoryModal();
@@ -97,7 +111,7 @@ function renderSidebar() {
 }
 
 
-// ─── RENDER FILTER BAR ────────────────────────────────────────────────────────
+// ─── RENDER FILTER BAR ─────────────────────────────────────────────────────────────
 function renderFilterBar() {
   const bar = document.getElementById('filterBar');
   const chips = categories.map(cat =>
@@ -115,13 +129,15 @@ function renderFilterBar() {
 }
 
 
-// ─── HIGHLIGHT ACTIVE FILTER ──────────────────────────────────────────────────
+// ─── HIGHLIGHT ACTIVE FILTER ─────────────────────────────────────────────────────────
 function highlightActiveFilter() {
   document.querySelectorAll('.sidebar-item').forEach(el => {
     el.classList.toggle('active', el.dataset.filter === currentFilter && currentView === 'templates');
   });
   const savedBtn = document.getElementById('sidebarSavedBtn');
   if (savedBtn) savedBtn.classList.toggle('active', currentView === 'saved');
+  const communityBtn = document.getElementById('sidebarCommunityBtn');
+  if (communityBtn) communityBtn.classList.toggle('active', currentView === 'community');
 
   document.querySelectorAll('.filter-chip').forEach(el => {
     el.classList.toggle('active', el.dataset.filter === currentFilter);
@@ -129,7 +145,7 @@ function highlightActiveFilter() {
 }
 
 
-// ─── SET FILTER (vista templates) ─────────────────────────────────────────────
+// ─── SET FILTER (vista templates) ───────────────────────────────────────────────────────
 function setFilter(filter) {
   currentView   = 'templates';
   currentFilter = filter;
@@ -138,6 +154,8 @@ function setFilter(filter) {
   document.getElementById('filterBar').classList.remove('hidden');
   document.getElementById('templatesGrid').classList.remove('hidden');
   document.getElementById('savedViewer').classList.add('hidden');
+  ensureCommunityViewer();
+  document.getElementById('communityViewer').classList.add('hidden');
 
   const titles = { all: 'Todos los templates' };
   document.getElementById('pageTitle').textContent = titles[filter] || filter;
@@ -150,7 +168,7 @@ function setFilter(filter) {
 }
 
 
-// ─── SET SAVED VIEW ───────────────────────────────────────────────────────────
+// ─── SET SAVED VIEW ─────────────────────────────────────────────────────────────────
 function setSavedView() {
   currentView = 'saved';
   highlightActiveFilter();
@@ -158,6 +176,8 @@ function setSavedView() {
   document.getElementById('filterBar').classList.add('hidden');
   document.getElementById('templatesGrid').classList.add('hidden');
   document.getElementById('savedViewer').classList.remove('hidden');
+  ensureCommunityViewer();
+  document.getElementById('communityViewer').classList.add('hidden');
 
   document.getElementById('pageTitle').textContent    = 'Scripts guardados';
   document.getElementById('pageSubtitle').textContent = 'Scripts generados y guardados desde los templates';
@@ -166,7 +186,172 @@ function setSavedView() {
 }
 
 
-// ─── RENDER SAVED VIEWER ──────────────────────────────────────────────────────
+// ─── COMMUNITY VIEW ───────────────────────────────────────────────────────────────
+// Community is a shared, non-per-user library of *templates* (not saved
+// scripts): a template still has its {VARIABLE} placeholders, so it's
+// actually reusable by whoever imports it, unlike an already-filled-in
+// saved script which only makes sense for the one device it was made for.
+let communityItems = [];
+let communityFilter = 'all';
+
+function ensureCommunityViewer() {
+  if (document.getElementById('communityViewer')) return;
+  const el = document.createElement('div');
+  el.id = 'communityViewer';
+  el.className = 'saved-viewer hidden';
+  document.getElementById('savedViewer').insertAdjacentElement('afterend', el);
+}
+
+async function loadCommunity() {
+  try {
+    const res = await fetch('/api/community');
+    const data = await res.json();
+    communityItems = data.items || [];
+  } catch {
+    communityItems = [];
+  }
+  updateCounts();
+}
+
+async function setCommunityView() {
+  currentView = 'community';
+  ensureCommunityViewer();
+  highlightActiveFilter();
+
+  document.getElementById('filterBar').classList.add('hidden');
+  document.getElementById('templatesGrid').classList.add('hidden');
+  document.getElementById('savedViewer').classList.add('hidden');
+  document.getElementById('communityViewer').classList.remove('hidden');
+
+  document.getElementById('pageTitle').textContent    = 'Community';
+  document.getElementById('pageSubtitle').textContent = 'Templates compartidos por otros usuarios — búscalos y añádelos a tu biblioteca';
+
+  await loadCommunity();
+  renderCommunityViewer();
+}
+
+function renderCommunityViewer() {
+  ensureCommunityViewer();
+  const viewer = document.getElementById('communityViewer');
+
+  const cats = [...new Set(communityItems.map(i => i.category))].sort();
+  const chips = cats.map(c =>
+    `<button class="filter-chip ${communityFilter === c ? 'active' : ''}" data-community-filter="${c}">${c}</button>`
+  ).join('');
+  const chipsBar = `
+    <div class="filter-bar" style="margin-bottom:12px">
+      <button class="filter-chip ${communityFilter === 'all' ? 'active' : ''}" data-community-filter="all">Todos</button>
+      ${chips}
+    </div>`;
+
+  let filtered = communityItems;
+  if (communityFilter !== 'all') filtered = filtered.filter(i => i.category === communityFilter);
+  if (searchQuery) {
+    const q = searchQuery.toLowerCase();
+    filtered = filtered.filter(i =>
+      i.name.toLowerCase().includes(q) ||
+      i.category.toLowerCase().includes(q) ||
+      (i.description || '').toLowerCase().includes(q)
+    );
+  }
+
+  if (!filtered.length) {
+    viewer.innerHTML = chipsBar + `
+      <div class="saved-empty">
+        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <circle cx="9" cy="7" r="4"/><path d="M2 21v-2a4 4 0 0 1 4-4h6a4 4 0 0 1 4 4v2"/>
+          <circle cx="17" cy="7" r="3"/><path d="M22 21v-2a3 3 0 0 0-2.5-2.96"/>
+        </svg>
+        <p>${communityItems.length
+          ? 'No hay resultados para esa búsqueda.'
+          : 'Todavía nadie ha subido ningún template a Community. Sube uno desde el icono ↑ de cualquier tarjeta.'
+        }</p>
+      </div>`;
+  } else {
+    const cards = filtered.map(item => {
+      const color = getCategoryColor(item.category);
+      const date = item.uploadedAt ? new Date(item.uploadedAt).toLocaleDateString() : '';
+      return `
+        <div class="saved-card" data-community-id="${item.id}">
+          <div class="saved-card-header">
+            <div class="saved-card-icon" style="background:${color.bg}; color:${color.accent}">
+              ${getCategoryIcon(item.category)}
+            </div>
+            <div class="saved-card-info">
+              <div class="saved-card-name">${item.name}</div>
+              <div class="saved-card-meta">
+                <span class="saved-card-template-tag">${item.category}</span>
+                <span class="meta-sep">·</span>
+                <span>${item.uploadedBy || 'anónimo'}</span>
+                <span class="meta-sep">·</span>
+                <span>${date}</span>
+              </div>
+            </div>
+            <div class="saved-card-actions">
+              <button class="saved-card-btn btn-import-community" title="Añadir a mis templates" aria-label="Añadir a mis templates">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                  <polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+          <div class="saved-card-body" style="padding-top:0">
+            <p style="color:var(--color-text-muted); font-size:var(--text-xs); margin:0 0 8px">${item.description || 'Sin descripción'}</p>
+          </div>
+        </div>`;
+    }).join('');
+    viewer.innerHTML = chipsBar + `<div class="saved-list">${cards}</div>`;
+  }
+
+  viewer.querySelectorAll('[data-community-filter]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      communityFilter = btn.dataset.communityFilter;
+      renderCommunityViewer();
+    });
+  });
+
+  viewer.querySelectorAll('.btn-import-community').forEach(btn => {
+    btn.addEventListener('click', async e => {
+      e.stopPropagation();
+      const card = btn.closest('[data-community-id]');
+      await importCommunityItem(card.dataset.communityId);
+    });
+  });
+}
+
+async function uploadToCommunity(template) {
+  const raw = buildRawCfg(template);
+  try {
+    const res = await fetch('/api/community/upload', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ content: raw })
+    });
+    const result = await res.json();
+    if (!res.ok) { showToast(result.error || 'Error al publicar', true); return; }
+    showToast(`"${template.name}" publicado en Community`);
+  } catch {
+    showToast('No se pudo conectar con el servidor', true);
+  }
+}
+
+async function importCommunityItem(id) {
+  try {
+    const res = await fetch(`/api/community/${encodeURIComponent(id)}/import`, { method: 'POST' });
+    const result = await res.json();
+    if (!res.ok) { showToast(result.error || 'Error al importar', true); return; }
+    showToast('Añadido a tus templates');
+    await loadTemplates();
+    if (currentView === 'templates') renderGrid();
+    updateCounts();
+  } catch {
+    showToast('No se pudo conectar con el servidor', true);
+  }
+}
+
+
+// ─── RENDER SAVED VIEWER ─────────────────────────────────────────────────────────────
 function renderSavedViewer() {
   const viewer = document.getElementById('savedViewer');
 
@@ -306,7 +491,7 @@ function renderSavedViewer() {
 }
 
 
-// ─── LAZY LOAD SAVED CONTENT ──────────────────────────────────────────────────
+// ─── LAZY LOAD SAVED CONTENT ─────────────────────────────────────────────────────────
 const _savedCache = {};
 
 async function getSavedContent(filename) {
@@ -331,13 +516,16 @@ async function loadSavedContent(filename) {
 }
 
 
-// ─── UPDATE COUNTS ────────────────────────────────────────────────────────────
+// ─── UPDATE COUNTS ─────────────────────────────────────────────────────────────────
 function updateCounts() {
   const countAll = document.getElementById('count-all');
   if (countAll) countAll.textContent = templates.length;
 
   const countSaved = document.getElementById('count-saved');
   if (countSaved) countSaved.textContent = savedScripts.length;
+
+  const countCommunity = document.getElementById('count-community');
+  if (countCommunity) countCommunity.textContent = communityItems.length;
 
   categories.forEach(cat => {
     const el = document.getElementById(`count-${cat.id}`);
@@ -346,7 +534,7 @@ function updateCounts() {
 }
 
 
-// ─── RENDER GRID ──────────────────────────────────────────────────────────────
+// ─── RENDER GRID ───────────────────────────────────────────────────────────────
 function renderGrid() {
   const grid = document.getElementById('templatesGrid');
   let filtered = templates;
@@ -397,6 +585,18 @@ function renderGrid() {
         <div class="card-icon">${getCategoryIcon(t.category)}</div>
         <span class="card-badge">${t.category}</span>
         <div class="card-actions">
+          <button class="card-download-btn" data-id="${t.id}" aria-label="Descargar para SmartConfigure" title="Descargar para SmartConfigure">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+              <polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+            </svg>
+          </button>
+          <button class="card-upload-btn" data-id="${t.id}" aria-label="Subir a Community" title="Subir a Community">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+              <polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
+            </svg>
+          </button>
           <button class="card-edit-btn" data-id="${t.id}" aria-label="Editar template" title="Editar">
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
               <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
@@ -429,6 +629,20 @@ function renderGrid() {
 
     card.addEventListener('click', () => openFormModal(t));
     card.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') openFormModal(t); });
+    card.querySelector('.card-download-btn').addEventListener('click', e => {
+      e.stopPropagation();
+      const blob = new Blob([t.content], { type: 'text/plain' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = t.name.replace(/[^a-z0-9]/gi, '_').toLowerCase() + '.txt';
+      a.click();
+      URL.revokeObjectURL(a.href);
+      showToast('Template descargado — listo para importar en SmartConfigure');
+    });
+    card.querySelector('.card-upload-btn').addEventListener('click', e => {
+      e.stopPropagation();
+      uploadToCommunity(t);
+    });
     card.querySelector('.card-edit-btn').addEventListener('click', e => {
       e.stopPropagation(); openEditModal(t);
     });
@@ -441,7 +655,7 @@ function renderGrid() {
 }
 
 
-// ─── OPEN FORM MODAL ──────────────────────────────────────────────────────────
+// ─── OPEN FORM MODAL ────────────────────────────────────────────────────────────────
 function openFormModal(template) {
   currentTemplate = template;
   const vars = [...new Set((template.content.match(/\{([^}]+)\}/g) || []))]
@@ -473,7 +687,7 @@ function openFormModal(template) {
 }
 
 
-// ─── GENERATE SCRIPT ──────────────────────────────────────────────────────────
+// ─── GENERATE SCRIPT ────────────────────────────────────────────────────────────────
 function generateScript() {
   if (!currentTemplate) return;
   let output = currentTemplate.content;
@@ -489,7 +703,7 @@ function generateScript() {
 }
 
 
-// ─── OPEN EDIT MODAL ──────────────────────────────────────────────────────────
+// ─── OPEN EDIT MODAL ───────────────────────────────────────────────────────────────
 function openEditModal(template) {
   const raw = buildRawCfg(template);
   document.getElementById('editModalSubtitle').textContent = template.id + '.cfg';
@@ -509,7 +723,7 @@ function buildRawCfg(template) {
 }
 
 
-// ─── DELETE SAVED MODAL ───────────────────────────────────────────────────────
+// ─── DELETE SAVED MODAL ─────────────────────────────────────────────────────────────
 function openDeleteSavedModal(saved) {
   const displayName = saved.customName || saved.templateName;
   document.getElementById('deleteSavedModalName').textContent = displayName;
@@ -532,7 +746,7 @@ function openDeleteSavedModal(saved) {
 }
 
 
-// ─── MODAL HELPERS ────────────────────────────────────────────────────────────
+// ─── MODAL HELPERS ─────────────────────────────────────────────────────────────────────
 function openModal(id)  { document.getElementById(id).classList.add('open'); }
 function closeModal(id) { document.getElementById(id).classList.remove('open'); }
 
