@@ -1,4 +1,4 @@
-// ─── COPY ─────────────────────────────────────────────────
+// ─── COPY ───────────────────────────────────
 document.getElementById('copyBtn').addEventListener('click', () => {
   const text = document.getElementById('scriptOutput').textContent;
   if (navigator.clipboard) {
@@ -12,7 +12,7 @@ document.getElementById('copyBtn').addEventListener('click', () => {
 });
 
 
-// ─── DOWNLOAD ────────────────────────────────────────────
+// ─── DOWNLOAD ────────────────────────────────
 document.getElementById('downloadBtn').addEventListener('click', () => {
   const text = document.getElementById('scriptOutput').textContent;
   const name = (currentTemplate ? currentTemplate.name.replace(/[^a-z0-9]/gi, '_').toLowerCase() : 'script') + '.txt';
@@ -25,7 +25,7 @@ document.getElementById('downloadBtn').addEventListener('click', () => {
 });
 
 
-// ─── SAVE SCRIPT ───────────────────────────────────────────
+// ─── SAVE SCRIPT ───────────────────────────────────
 document.getElementById('saveScriptBtn').addEventListener('click', () => {
   if (!currentTemplate) return;
   // Pre-rellena el input con el nombre del template como sugerencia
@@ -64,9 +64,8 @@ document.getElementById('saveNameInput').addEventListener('keydown', e => {
 });
 
 
-// ─── IMPORT ─────────────────────────────────────────────────────
+// ─── IMPORT ────────────────────────────────────────────────
 let _pendingZipFile = null;
-
 
 function resetImportModal() {
   _pendingZipFile = null;
@@ -74,7 +73,7 @@ function resetImportModal() {
   document.getElementById('importFilename').textContent = '';
   document.getElementById('importModalSubtitle').textContent = 'Carga un .cfg o escríbelo manualmente';
   document.getElementById('importConfirmBtn').innerHTML = `
-    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
     Cargar Template`;
   document.getElementById('cfgEditorSection').classList.remove('hidden');
   document.getElementById('zipPreviewSection').classList.add('hidden');
@@ -133,7 +132,7 @@ function loadCfgFile(file) {
     document.getElementById('zipPreviewSection').classList.add('hidden');
     document.getElementById('importModalSubtitle').textContent = 'Carga un .cfg o escríbelo manualmente';
     document.getElementById('importConfirmBtn').innerHTML = `
-      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
       Cargar Template`;
   };
   reader.readAsText(file);
@@ -169,7 +168,7 @@ async function loadZipFile(file) {
   document.getElementById('cfgEditorSection').classList.add('hidden');
   document.getElementById('zipPreviewSection').classList.remove('hidden');
   document.getElementById('importConfirmBtn').innerHTML = `
-    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
     Importar ${cfgFiles.length} template${cfgFiles.length !== 1 ? 's' : ''}`;
 
   document.getElementById('zipFileList').innerHTML = cfgFiles.map(name => `
@@ -197,7 +196,7 @@ document.querySelectorAll('.editor-tab').forEach(tab => {
 // Confirmar carga
 document.getElementById('importConfirmBtn').addEventListener('click', async () => {
 
-  // ── Modo ZIP ────────────────────────────────────────────
+  // ── Modo ZIP ──────────────────────────
   if (_pendingZipFile) {
     const zip      = await JSZip.loadAsync(_pendingZipFile);
     const cfgFiles = Object.keys(zip.files).filter(n => n.endsWith('.cfg') && !zip.files[n].dir);
@@ -232,7 +231,7 @@ document.getElementById('importConfirmBtn').addEventListener('click', async () =
     return;
   }
 
-  // ── Modo CFG individual ─────────────────────────────────────────
+  // ── Modo CFG individual ──────────────────────────
   const raw = document.getElementById('cfgEditor').value.trim();
   if (!raw) { showToast('El editor está vacío', true); return; }
 
@@ -264,23 +263,23 @@ document.getElementById('importConfirmBtn').addEventListener('click', async () =
 });
 
 
-// ─── GENERATE ─────────────────────────────────────────────────
+// ─── GENERATE ─────────────────────────────────
 document.getElementById('generateBtn').addEventListener('click', generateScript);
 document.getElementById('formModalBody').addEventListener('keydown', e => {
   if (e.key === 'Enter') generateScript();
 });
 
 
-// ─── SEARCH ───────────────────────────────────────────────────
+// ─── SEARCH ────────────────────────────────
 document.getElementById('globalSearch').addEventListener('input', e => {
   searchQuery = e.target.value.trim();
-  // Si está en vista saved, filtrar ahí; si no, el grid
   if (currentView === 'saved') renderSavedViewer();
+  else if (currentView === 'community') renderCommunityViewer();
   else renderGrid();
 });
 
 
-// ─── MODAL CLOSE (overlay click + Escape) ────────────────────────────────
+// ─── MODAL CLOSE (overlay click + Escape) ──────────────────────────
 const NO_OUTSIDE_CLOSE = new Set(['importModal', 'editModal']);
 
 document.querySelectorAll('.modal-overlay').forEach(overlay => {
@@ -292,7 +291,7 @@ document.querySelectorAll('.modal-overlay').forEach(overlay => {
 });
 
 
-// ─── EDIT MODAL TABS ──────────────────────────────────────────────
+// ─── EDIT MODAL TABS ────────────────────────────────
 document.querySelectorAll('[data-edit-tab]').forEach(tab => {
   tab.addEventListener('click', () => {
     document.querySelectorAll('[data-edit-tab]').forEach(t => t.classList.remove('active'));
@@ -303,7 +302,7 @@ document.querySelectorAll('[data-edit-tab]').forEach(tab => {
 });
 
 
-// ─── EDIT SAVE ───────────────────────────────────────────────────
+// ─── EDIT SAVE ────────────────────────────────
 document.getElementById('editSaveBtn').addEventListener('click', async () => {
   const raw = document.getElementById('cfgEditEditor').value.trim();
   if (!raw) { showToast('El editor está vacío', true); return; }
@@ -336,7 +335,7 @@ document.getElementById('editSaveBtn').addEventListener('click', async () => {
 });
 
 
-// ─── CATEGORY MODAL ──────────────────────────────────────────────────────
+// ─── CATEGORY MODAL ──────────────────────────────────────
 let _selectedIcon  = 'folder';
 let _selectedColor = COLOR_OPTIONS[0].id;
 
@@ -384,7 +383,7 @@ function buildCategoryModal() {
 }
 
 
-// ─── CONFIRM CATEGORY ────────────────────────────────────────────────
+// ─── CONFIRM CATEGORY ────────────────────────────────
 document.getElementById('confirmCategoryBtn').addEventListener('click', async () => {
   const name = document.getElementById('catNameInput').value.trim();
   if (!name) { showToast('El nombre es obligatorio', true); return; }
@@ -433,7 +432,7 @@ function openDeleteCatModal(catId) {
 }
 
 
-// ─── THEME TOGGLE ────────────────────────────────────────────────────
+// ─── THEME TOGGLE ────────────────────────────────────
 (function () {
   const btn  = document.querySelector('[data-theme-toggle]');
   const root = document.documentElement;
@@ -456,7 +455,7 @@ function openDeleteCatModal(catId) {
 })();
 
 
-// ─── MOBILE SIDEBAR DRAWER (hamburger + overlay + Escape) ────────────────
+// ─── MOBILE SIDEBAR DRAWER (hamburger + overlay + Escape) ──────────────────────────
 (function () {
   const sidebar   = document.getElementById('sidebar');
   const overlay   = document.getElementById('sidebarOverlay');
@@ -485,7 +484,7 @@ function openDeleteCatModal(catId) {
 })();
 
 
-// ─── SIDEBAR DRAG ──────────────────────────────────────────────────────
+// ─── SIDEBAR DRAG ─────────────────────────────────────────
 function initSidebarDrag() {
   const items = [...document.querySelectorAll('.sidebar-item[data-filter]:not([data-filter="all"])')];
   let dragSrc = null;
@@ -551,7 +550,7 @@ async function saveCategoryOrder() {
 }
 
 
-// ─── EXPORT ZIP ───────────────────────────────────────────────────
+// ─── EXPORT ZIP ────────────────────────────────
 document.getElementById('exportBtn').addEventListener('click', async () => {
   try {
     const res = await fetch('/api/export');
