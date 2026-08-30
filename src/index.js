@@ -186,7 +186,7 @@ RULES:
 2. Reuse the SAME placeholder name every time the same value is needed again in the script.
 3. Pick the category that best matches the request from the allowed list above. If none fit well, use "Other".
 4. Do not invent extra metadata lines beyond name/category/description.
-5. Optionally, the FIRST time a variable appears you may add an example value after a comma, e.g. {SUBNET_MASK, 255.255.255.0}. This is just a hint shown in the form and is never required -- do not repeat the example on later occurrences of the same variable.
+5. For EVERY variable, the FIRST time it appears you MUST add a realistic example value after a comma, e.g. {SUBNET_MASK, 255.255.255.0}, so the user has a clear reference for the expected format. Do not repeat the example on later occurrences of the same variable -- just write {VARIABLE_NAME} again.
 6. Do not wrap the output in \`\`\` code fences or add any commentary -- respond with the raw template only.`;
 }
 
