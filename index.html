@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="es" data-theme="dark">
+<html lang="en" data-theme="dark">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -17,7 +17,7 @@
      TOP BAR
      ============================================================ -->
 <header class="topbar">
-  <button class="btn-icon menu-btn" id="menuBtn" aria-label="Abrir menú" title="Menú">
+  <button class="btn-icon menu-btn" id="menuBtn" aria-label="Open menu" title="Menu">
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
   </button>
 
@@ -32,23 +32,23 @@
 
   <div class="topbar-center">
     <svg class="search-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-    <input type="text" class="search-input" placeholder="Buscar templates…" id="globalSearch">
+    <input type="text" class="search-input" placeholder="Search templates…" id="globalSearch">
   </div>
 
   <div class="topbar-actions">
-    <button class="btn-icon" data-theme-toggle aria-label="Cambiar tema" title="Cambiar tema">
+    <button class="btn-icon" data-theme-toggle aria-label="Toggle theme" title="Toggle theme">
       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
     </button>
-    <button class="btn-ghost" id="exportBtn" title="Exportar todos los templates" style="white-space:nowrap">
+    <button class="btn-ghost" id="exportBtn" title="Export all templates" style="white-space:nowrap">
       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
     </button>
-    <button class="btn-ghost" id="aiGenerateBtn" title="Generar template con IA">
+    <button class="btn-ghost" id="aiGenerateBtn" title="Generate template with AI">
       <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M12 2l1.8 5.6L19 9l-5.2 1.4L12 16l-1.8-5.6L5 9l5.2-1.4z" fill="currentColor"/><path d="M19 15l0.7 2.1L22 18l-2.3 0.9L19 21l-0.7-2.1L16 18l2.3-0.9z" fill="currentColor"/></svg>
       <span class="btn-label">AI Generate</span>
     </button>
     <button class="btn-primary" id="importBtn">
       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12l7 7 7-7"/></svg>
-      <span class="btn-label">Importar Template</span>
+      <span class="btn-label">Import Template</span>
     </button>
   </div>
 </header>
@@ -63,25 +63,25 @@
 
   <!-- SIDEBAR -->
   <nav class="sidebar" id="sidebar">
-    <!-- Renderizado dinámicamente por ui.js → renderSidebar() -->
+    <!-- Dynamically rendered by ui.js → renderSidebar() -->
   </nav>
 
   <!-- MAIN CONTENT -->
   <main class="main-content">
     <div class="page-header">
       <div>
-        <h1 class="page-title" id="pageTitle">Todos los templates</h1>
-        <p class="page-subtitle" id="pageSubtitle">Selecciona un template para generar el script de configuración</p>
+        <h1 class="page-title" id="pageTitle">All templates</h1>
+        <p class="page-subtitle" id="pageSubtitle">Pick a template to generate a configuration script</p>
       </div>
     </div>
 
-    <!-- FILTER CHIPS — oculto en vista saved -->
+    <!-- FILTER CHIPS — hidden in saved view -->
     <div class="filter-bar" id="filterBar"></div>
 
-    <!-- TEMPLATE GRID — visible en vista templates -->
+    <!-- TEMPLATE GRID — visible in templates view -->
     <div class="templates-grid" id="templatesGrid"></div>
 
-    <!-- SAVED SCRIPT VIEWER — visible solo en vista saved -->
+    <!-- SAVED SCRIPT VIEWER — visible only in saved view -->
     <div id="savedViewer" class="hidden"></div>
   </main>
 </div>
@@ -100,7 +100,7 @@
         <div class="modal-title" id="aiModalTitle">Generate with AI</div>
         <div class="modal-subtitle">Describe what you need and review the template before saving</div>
       </div>
-      <button class="modal-close" onclick="closeModal('aiModal')" aria-label="Cerrar">
+      <button class="modal-close" onclick="closeModal('aiModal')" aria-label="Close">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6L6 18M6 6l12 12"/></svg>
       </button>
     </div>
@@ -141,7 +141,7 @@
 
 
 <!-- ============================================================
-     MODAL: FORMULARIO DE VARIABLES
+     MODAL: VARIABLES FORM
      ============================================================ -->
 <div class="modal-overlay" id="formModal" role="dialog" aria-modal="true" aria-labelledby="formModalTitle">
   <div class="modal">
@@ -151,16 +151,16 @@
         <div class="modal-title" id="formModalTitle">Template</div>
         <div class="modal-subtitle" id="formModalSubtitle"></div>
       </div>
-      <button class="modal-close" onclick="closeModal('formModal')" aria-label="Cerrar">
+      <button class="modal-close" onclick="closeModal('formModal')" aria-label="Close">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6L6 18M6 6l12 12"/></svg>
       </button>
     </div>
     <div class="modal-body" id="formModalBody"></div>
     <div class="modal-footer">
-      <button class="btn-ghost" onclick="closeModal('formModal')">Cancelar</button>
+      <button class="btn-ghost" onclick="closeModal('formModal')">Cancel</button>
       <button class="btn-success" id="generateBtn">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
-        Generar Script
+        Generate Script
       </button>
     </div>
   </div>
@@ -177,25 +177,25 @@
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
       </div>
       <div>
-        <div class="modal-title" id="outputModalTitle">Script generado</div>
-        <div class="modal-subtitle">Listo para copiar y pegar en el dispositivo</div>
+        <div class="modal-title" id="outputModalTitle">Generated script</div>
+        <div class="modal-subtitle">Ready to copy and paste onto the device</div>
       </div>
-      <button class="modal-close" onclick="closeModal('outputModal')" aria-label="Cerrar">
+      <button class="modal-close" onclick="closeModal('outputModal')" aria-label="Close">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6L6 18M6 6l12 12"/></svg>
       </button>
     </div>
     <div class="modal-body">
       <div class="script-output-wrap">
         <div class="script-output-bar">
-          <span class="script-output-label">Script de configuración</span>
+          <span class="script-output-label">Configuration script</span>
           <div class="script-output-actions">
             <button class="btn-copy" id="copyBtn">
               <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
-              Copiar
+              Copy
             </button>
             <button class="btn-download" id="downloadBtn">
               <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-              Descargar .txt
+              Download .txt
             </button>
           </div>
         </div>
@@ -203,14 +203,14 @@
       </div>
     </div>
     <div class="modal-footer">
-      <button class="btn-ghost" onclick="closeModal('outputModal'); openModal('formModal')">← Volver al formulario</button>
+      <button class="btn-ghost" onclick="closeModal('outputModal'); openModal('formModal')">← Back to form</button>
       <button class="btn-save" id="saveScriptBtn">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
           <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
           <polyline points="17 21 17 13 7 13 7 21"/>
           <polyline points="7 3 7 8 15 8"/>
         </svg>
-        Guardar
+        Save
       </button>
     </div>
   </div>
@@ -218,7 +218,7 @@
 
 
 <!-- ============================================================
-     MODAL: NOMBRE DEL SCRIPT GUARDADO
+     MODAL: SAVED SCRIPT NAME
      ============================================================ -->
 <div class="modal-overlay" id="saveNameModal" role="dialog" aria-modal="true" aria-labelledby="saveNameModalTitle">
   <div class="modal" style="max-width:440px">
@@ -231,22 +231,22 @@
         </svg>
       </div>
       <div>
-        <div class="modal-title" id="saveNameModalTitle">Guardar script</div>
-        <div class="modal-subtitle" id="saveNameModalSubtitle">Pónle un nombre para identificarlo luego</div>
+        <div class="modal-title" id="saveNameModalTitle">Save script</div>
+        <div class="modal-subtitle" id="saveNameModalSubtitle">Give it a name so you can find it later</div>
       </div>
-      <button class="modal-close" onclick="closeModal('saveNameModal')" aria-label="Cerrar">
+      <button class="modal-close" onclick="closeModal('saveNameModal')" aria-label="Close">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6L6 18M6 6l12 12"/></svg>
       </button>
     </div>
     <div class="modal-body">
       <div class="form-field">
         <label class="form-label" for="saveNameInput">
-          Nombre del script <span class="label-required">*</span>
+          Script name <span class="label-required">*</span>
         </label>
         <input
           class="form-input"
           id="saveNameInput"
-          placeholder="Ej: SW-CORE-01 RoCE config"
+          placeholder="E.g. SW-CORE-01 RoCE config"
           autocomplete="off"
           maxlength="80"
         >
@@ -255,18 +255,18 @@
           margin-top: var(--space-1);
           font-size: var(--text-xs);
           color: var(--color-text-faint);
-        ">El nombre aparecerá en la vista Saved Scripts para diferenciar este script del resto.</span>
+        ">The name will appear in the Saved Scripts view to tell this script apart from the rest.</span>
       </div>
     </div>
     <div class="modal-footer">
-      <button class="btn-ghost" onclick="closeModal('saveNameModal'); openModal('outputModal')">← Volver</button>
+      <button class="btn-ghost" onclick="closeModal('saveNameModal'); openModal('outputModal')">← Back</button>
       <button class="btn-success" id="confirmSaveNameBtn">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
           <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
           <polyline points="17 21 17 13 7 13 7 21"/>
           <polyline points="7 3 7 8 15 8"/>
         </svg>
-        Guardar script
+        Save script
       </button>
     </div>
   </div>
@@ -274,7 +274,7 @@
 
 
 <!-- ============================================================
-     MODAL: IMPORTAR TEMPLATE
+     MODAL: IMPORT TEMPLATE
      ============================================================ -->
 <div class="modal-overlay" id="importModal" role="dialog" aria-modal="true" aria-labelledby="importModalTitle">
   <div class="modal import-modal">
@@ -283,10 +283,10 @@
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12l7 7 7-7"/></svg>
       </div>
       <div>
-        <div class="modal-title" id="importModalTitle">Nuevo Template</div>
-        <div class="modal-subtitle" id="importModalSubtitle">Carga un .cfg o escríbelo manualmente</div>
+        <div class="modal-title" id="importModalTitle">New Template</div>
+        <div class="modal-subtitle" id="importModalSubtitle">Load a .cfg file or write one manually</div>
       </div>
-      <button class="modal-close" onclick="closeModal('importModal')" aria-label="Cerrar">
+      <button class="modal-close" onclick="closeModal('importModal')" aria-label="Close">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6L6 18M6 6l12 12"/></svg>
       </button>
     </div>
@@ -294,48 +294,48 @@
       <div class="drop-zone" id="dropZone">
         <input type="file" id="cfgFileInput" accept=".cfg,.zip" hidden>
         <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-        <p class="drop-zone-text">Arrastra un archivo <strong>.cfg</strong> o <strong>.zip</strong> aquí</p>
-        <button class="btn-ghost" id="browseBtn" type="button">Seleccionar archivo</button>
+        <p class="drop-zone-text">Drag a <strong>.cfg</strong> or <strong>.zip</strong> file here</p>
+        <button class="btn-ghost" id="browseBtn" type="button">Choose file</button>
       </div>
       <div id="cfgEditorSection">
         <div class="editor-tabs">
           <button class="editor-tab active" data-tab="editor">Editor</button>
-          <button class="editor-tab" data-tab="help">Ayuda</button>
+          <button class="editor-tab" data-tab="help">Help</button>
         </div>
         <div class="editor-panel" id="tabEditor">
           <textarea class="import-textarea" id="cfgEditor" spellcheck="false"
-            placeholder="# name: Mi Template&#10;# category: Management&#10;# description: Descripción del template.&#10;&#10;sysname {HOSTNAME}"></textarea>
+            placeholder="# name: My Template&#10;# category: Management&#10;# description: Template description.&#10;&#10;sysname {HOSTNAME}"></textarea>
         </div>
         <div class="editor-panel hidden" id="tabHelp">
           <div class="help-content">
-            <p class="help-title">Formato del archivo .cfg</p>
-            <p class="help-desc">Las primeras líneas son metadatos (empiezan con <code>#</code>). El resto es el script.</p>
-            <pre class="help-example"># name: Nombre visible en la card
+            <p class="help-title">.cfg file format</p>
+            <p class="help-desc">The first lines are metadata (starting with <code>#</code>). The rest is the script.</p>
+            <pre class="help-example"># name: Name shown on the card
 # category: Management
-# description: Descripción breve.
+# description: Short description.
 
 sysname {HOSTNAME}
 !
-interface {INTERFAZ}
- ip address {IP} {MASCARA}</pre>
-            <p class="help-title">Categorías disponibles</p>
+interface {INTERFACE}
+ ip address {IP} {SUBNET_MASK}</pre>
+            <p class="help-title">Available categories</p>
             <div class="help-cats"></div>
             <p class="help-title">Variables</p>
-            <p class="help-desc">Escribe las variables entre llaves en mayúsculas: <code>{NOMBRE_VARIABLE}</code>. Se generará un campo de formulario por cada una.</p>
+            <p class="help-desc">Write variables in uppercase wrapped in curly braces: <code>{VARIABLE_NAME}</code>. A form field will be generated for each one.</p>
           </div>
         </div>
       </div>
       <div id="zipPreviewSection" class="hidden">
-        <p class="help-title" style="margin-bottom:var(--space-2)">Contenido del ZIP</p>
+        <p class="help-title" style="margin-bottom:var(--space-2)">ZIP contents</p>
         <ul class="zip-file-list" id="zipFileList"></ul>
       </div>
     </div>
     <div class="modal-footer">
       <span class="import-filename" id="importFilename"></span>
-      <button class="btn-ghost" onclick="closeModal('importModal')">Cancelar</button>
+      <button class="btn-ghost" onclick="closeModal('importModal')">Cancel</button>
       <button class="btn-success" id="importConfirmBtn">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
-        Cargar Template
+        Load Template
       </button>
     </div>
   </div>
@@ -343,7 +343,7 @@ interface {INTERFAZ}
 
 
 <!-- ============================================================
-     MODAL: EDITAR TEMPLATE
+     MODAL: EDIT TEMPLATE
      ============================================================ -->
 <div class="modal-overlay" id="editModal" role="dialog" aria-modal="true" aria-labelledby="editModalTitle">
   <div class="modal edit-modal">
@@ -355,50 +355,50 @@ interface {INTERFAZ}
         </svg>
       </div>
       <div>
-        <div class="modal-title" id="editModalTitle">Editar Template</div>
+        <div class="modal-title" id="editModalTitle">Edit Template</div>
         <div class="modal-subtitle" id="editModalSubtitle"></div>
       </div>
-      <button class="modal-close" onclick="closeModal('editModal')" aria-label="Cerrar">
+      <button class="modal-close" onclick="closeModal('editModal')" aria-label="Close">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6L6 18M6 6l12 12"/></svg>
       </button>
     </div>
     <div class="modal-body">
       <div class="editor-tabs">
         <button class="editor-tab active" data-edit-tab="editor">Editor</button>
-        <button class="editor-tab" data-edit-tab="help">Ayuda</button>
+        <button class="editor-tab" data-edit-tab="help">Help</button>
       </div>
       <div class="editor-panel" id="editTabEditor">
         <textarea class="import-textarea" id="cfgEditEditor" spellcheck="false"></textarea>
       </div>
       <div class="editor-panel hidden" id="editTabHelp">
         <div class="help-content">
-          <p class="help-title">Formato del archivo .cfg</p>
-          <p class="help-desc">Las primeras líneas son metadatos (empiezan con <code>#</code>). El resto es el script.</p>
-          <pre class="help-example"># name: Nombre visible en la card
+          <p class="help-title">.cfg file format</p>
+          <p class="help-desc">The first lines are metadata (starting with <code>#</code>). The rest is the script.</p>
+          <pre class="help-example"># name: Name shown on the card
 # category: Management
-# description: Descripción breve.
+# description: Short description.
 
 sysname {HOSTNAME}
 !
-interface {INTERFAZ}
- ip address {IP} {MASCARA}</pre>
-          <p class="help-title">Categorías disponibles</p>
+interface {INTERFACE}
+ ip address {IP} {SUBNET_MASK}</pre>
+          <p class="help-title">Available categories</p>
           <div class="help-cats"></div>
           <p class="help-title">Variables</p>
-          <p class="help-desc">Escribe las variables entre llaves en mayúsculas: <code>{NOMBRE_VARIABLE}</code>.</p>
+          <p class="help-desc">Write variables in uppercase wrapped in curly braces: <code>{VARIABLE_NAME}</code>.</p>
         </div>
       </div>
     </div>
     <div class="modal-footer">
       <span class="import-filename" id="editFilename"></span>
-      <button class="btn-ghost" onclick="closeModal('editModal')">Cancelar</button>
+      <button class="btn-ghost" onclick="closeModal('editModal')">Cancel</button>
       <button class="btn-success" id="editSaveBtn">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
           <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
           <polyline points="17 21 17 13 7 13 7 21"/>
           <polyline points="7 3 7 8 15 8"/>
         </svg>
-        Guardar cambios
+        Save changes
       </button>
     </div>
   </div>
@@ -406,7 +406,7 @@ interface {INTERFAZ}
 
 
 <!-- ============================================================
-     MODAL: NUEVA CATEGORÍA
+     MODAL: NEW CATEGORY
      ============================================================ -->
 <div class="modal-overlay" id="categoryModal" role="dialog" aria-modal="true" aria-labelledby="categoryModalTitle">
   <div class="modal" style="max-width:480px">
@@ -417,20 +417,20 @@ interface {INTERFAZ}
         </svg>
       </div>
       <div>
-        <div class="modal-title" id="categoryModalTitle">Nueva Categoría</div>
-        <div class="modal-subtitle">Elige nombre e icono</div>
+        <div class="modal-title" id="categoryModalTitle">New Category</div>
+        <div class="modal-subtitle">Choose a name and icon</div>
       </div>
-      <button class="modal-close" onclick="closeModal('categoryModal')" aria-label="Cerrar">
+      <button class="modal-close" onclick="closeModal('categoryModal')" aria-label="Close">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6L6 18M6 6l12 12"/></svg>
       </button>
     </div>
     <div class="modal-body">
       <div class="form-field">
-        <label class="form-label" for="catNameInput">Nombre <span class="label-required">*</span></label>
-        <input class="form-input" id="catNameInput" placeholder="Ej: Firewall, Routing, DNS…" autocomplete="off">
+        <label class="form-label" for="catNameInput">Name <span class="label-required">*</span></label>
+        <input class="form-input" id="catNameInput" placeholder="E.g. Firewall, Routing, DNS…" autocomplete="off">
       </div>
       <div class="form-field">
-        <label class="form-label">Icono</label>
+        <label class="form-label">Icon</label>
         <div class="icon-picker" id="iconPicker"></div>
       </div>
       <div class="form-field">
@@ -439,13 +439,13 @@ interface {INTERFAZ}
       </div>
     </div>
     <div class="modal-footer">
-      <button class="btn-ghost" onclick="closeModal('categoryModal')">Cancelar</button>
+      <button class="btn-ghost" onclick="closeModal('categoryModal')">Cancel</button>
       <button class="btn-success" id="confirmCategoryBtn">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
           <polyline points="9 11 12 14 22 4"/>
           <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
         </svg>
-        Crear Categoría
+        Create Category
       </button>
     </div>
   </div>
@@ -453,7 +453,7 @@ interface {INTERFAZ}
 
 
 <!-- ============================================================
-     MODAL: CONFIRMAR BORRADO DE TEMPLATE
+     MODAL: CONFIRM DELETE TEMPLATE
      ============================================================ -->
 <div class="modal-overlay" id="deleteModal" role="dialog" aria-modal="true">
   <div class="modal" style="max-width:420px">
@@ -467,29 +467,29 @@ interface {INTERFAZ}
         </svg>
       </div>
       <div>
-        <div class="modal-title">Eliminar template</div>
-        <div class="modal-subtitle">Esta acción no se puede deshacer</div>
+        <div class="modal-title">Delete template</div>
+        <div class="modal-subtitle">This action cannot be undone</div>
       </div>
-      <button class="modal-close" onclick="closeModal('deleteModal')" aria-label="Cerrar">
+      <button class="modal-close" onclick="closeModal('deleteModal')" aria-label="Close">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6L6 18M6 6l12 12"/></svg>
       </button>
     </div>
     <div class="modal-body">
       <p style="font-size:var(--text-sm); color:var(--color-text-muted); line-height:1.6">
-        ¿Seguro que quieres eliminar el template
+        Are you sure you want to delete the template
         <strong style="color:var(--color-text)" id="deleteModalName"></strong>?
-        El archivo <code style="font-family:var(--font-mono); font-size:var(--text-xs); color:var(--color-error)">.cfg</code>
-        se borrará permanentemente de disco.
+        The <code style="font-family:var(--font-mono); font-size:var(--text-xs); color:var(--color-error)">.cfg</code> file
+        will be permanently deleted from disk.
       </p>
     </div>
     <div class="modal-footer">
-      <button class="btn-ghost" onclick="closeModal('deleteModal')">Cancelar</button>
+      <button class="btn-ghost" onclick="closeModal('deleteModal')">Cancel</button>
       <button class="btn-delete" id="confirmDeleteBtn">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
           <polyline points="3 6 5 6 21 6"/>
           <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
         </svg>
-        Eliminar
+        Delete
       </button>
     </div>
   </div>
@@ -497,7 +497,7 @@ interface {INTERFAZ}
 
 
 <!-- ============================================================
-     MODAL: CONFIRMAR BORRADO DE CATEGORÍA
+     MODAL: CONFIRM DELETE CATEGORY
      ============================================================ -->
 <div class="modal-overlay" id="deleteCatModal" role="dialog" aria-modal="true">
   <div class="modal" style="max-width:420px">
@@ -511,29 +511,29 @@ interface {INTERFAZ}
         </svg>
       </div>
       <div>
-        <div class="modal-title">Eliminar categoría</div>
-        <div class="modal-subtitle">Esta acción no se puede deshacer</div>
+        <div class="modal-title">Delete category</div>
+        <div class="modal-subtitle">This action cannot be undone</div>
       </div>
-      <button class="modal-close" onclick="closeModal('deleteCatModal')" aria-label="Cerrar">
+      <button class="modal-close" onclick="closeModal('deleteCatModal')" aria-label="Close">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6L6 18M6 6l12 12"/></svg>
       </button>
     </div>
     <div class="modal-body">
       <p style="font-size:var(--text-sm); color:var(--color-text-muted); line-height:1.6">
-        ¿Seguro que quieres eliminar la categoría
+        Are you sure you want to delete the category
         <strong style="color:var(--color-text)" id="deleteCatModalName"></strong>?
-        Los templates asignados a ella <strong style="color:var(--color-text)">no se borrarán</strong>,
-        pero quedarán sin categoría reconocida.
+        Templates assigned to it <strong style="color:var(--color-text)">will not be deleted</strong>,
+        but will be left without a recognized category.
       </p>
     </div>
     <div class="modal-footer">
-      <button class="btn-ghost" onclick="closeModal('deleteCatModal')">Cancelar</button>
+      <button class="btn-ghost" onclick="closeModal('deleteCatModal')">Cancel</button>
       <button class="btn-delete" id="confirmDeleteCatBtn">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
           <polyline points="3 6 5 6 21 6"/>
           <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
         </svg>
-        Eliminar
+        Delete
       </button>
     </div>
   </div>
@@ -541,7 +541,7 @@ interface {INTERFAZ}
 
 
 <!-- ============================================================
-     MODAL: CONFIRMAR BORRADO DE SCRIPT GUARDADO
+     MODAL: CONFIRM DELETE SAVED SCRIPT
      ============================================================ -->
 <div class="modal-overlay" id="deleteSavedModal" role="dialog" aria-modal="true">
   <div class="modal" style="max-width:420px">
@@ -555,29 +555,29 @@ interface {INTERFAZ}
         </svg>
       </div>
       <div>
-        <div class="modal-title">Eliminar script guardado</div>
-        <div class="modal-subtitle">Esta acción no se puede deshacer</div>
+        <div class="modal-title">Delete saved script</div>
+        <div class="modal-subtitle">This action cannot be undone</div>
       </div>
-      <button class="modal-close" onclick="closeModal('deleteSavedModal')" aria-label="Cerrar">
+      <button class="modal-close" onclick="closeModal('deleteSavedModal')" aria-label="Close">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6L6 18M6 6l12 12"/></svg>
       </button>
     </div>
     <div class="modal-body">
       <p style="font-size:var(--text-sm); color:var(--color-text-muted); line-height:1.6">
-        ¿Seguro que quieres eliminar el script
+        Are you sure you want to delete the script
         <strong style="color:var(--color-text)" id="deleteSavedModalName"></strong>?
-        El archivo <code style="font-family:var(--font-mono); font-size:var(--text-xs); color:var(--color-error)">.txt</code>
-        se borrará permanentemente de disco.
+        The <code style="font-family:var(--font-mono); font-size:var(--text-xs); color:var(--color-error)">.txt</code> file
+        will be permanently deleted from disk.
       </p>
     </div>
     <div class="modal-footer">
-      <button class="btn-ghost" onclick="closeModal('deleteSavedModal')">Cancelar</button>
+      <button class="btn-ghost" onclick="closeModal('deleteSavedModal')">Cancel</button>
       <button class="btn-delete" id="confirmDeleteSavedBtn">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
           <polyline points="3 6 5 6 21 6"/>
           <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
         </svg>
-        Eliminar
+        Delete
       </button>
     </div>
   </div>
