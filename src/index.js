@@ -73,6 +73,17 @@ async function getSavedIndex(env, userId) {
   return raw ? JSON.parse(raw) : [];
 }
 
+// ─── Community: a shared, non-per-user KV namespace (community:*) so
+// templates published here are visible to every account, unlike
+// everything else in this file which is scoped under user:<id>:*.
+function communityKey(key) {
+  return `community:${key}`;
+}
+async function getCommunityIndex(env) {
+  const raw = await env.SCRIPTFORGE_KV.get(communityKey("index"));
+  return raw ? JSON.parse(raw) : [];
+}
+
 // ─── AI generation: reveal the user's own key from smartmatrix-auth via
 // Service Binding (a plain fetch() to another *.workers.dev domain from
 // inside a Worker is blocked by Cloudflare -- error 1042 -- so we bind the
@@ -342,7 +353,70 @@ export default {
       return json({ ok: true });
     }
 
-    // ─── AI: providers status + template generation ──────────────────
+    // ─── Community: shared, searchable-by-frontend template library ──
+    if (path === "/api/community" && method === "GET") {
+      return json({ items: await getCommunityIndex(env) });
+    }
+    if (path === "/api/community/upload" && method === "POST") {
+      const data = await request.json();
+      const content = (data.content || "").trim();
+      if (!content) return json({ error: "content es obligatorio" }, 400);
+
+      // Reuse the same "# name: / # category: / # description:" header the
+      // rest of the app already relies on, so a community item round-trips
+      // through the exact same parseCfg() the frontend uses everywhere else.
+      const nameMatch = content.match(/^# name:\s*(.+)$/m);
+      const categoryMatch = content.match(/^# category:\s*(.+)$/m);
+      const descMatch = content.match(/^# description:\s*(.+)$/m);
+      if (!nameMatch || !categoryMatch) {
+        return json({ error: "El contenido no tiene los metadatos name/category" }, 400);
+      }
+
+      const id = crypto.randomUUID();
+      const entry = {
+        id,
+        name: nameMatch[1].trim(),
+        category: categoryMatch[1].trim(),
+        description: descMatch ? descMatch[1].trim() : "",
+        uploadedBy: user.email,
+        uploadedAt: new Date().toISOString()
+      };
+
+      await env.SCRIPTFORGE_KV.put(communityKey(`script:${id}`), content);
+      const index = await getCommunityIndex(env);
+      index.unshift(entry);
+      await env.SCRIPTFORGE_KV.put(communityKey("index"), JSON.stringify(index));
+      return json({ ok: true, id });
+    }
+    if (path.startsWith("/api/community/") && path.endsWith("/import") && method === "POST") {
+      const id = decodeURIComponent(path.replace("/api/community/", "").replace("/import", ""));
+      const content = await env.SCRIPTFORGE_KV.get(communityKey(`script:${id}`));
+      if (content === null) return json({ error: "Script de Community no encontrado" }, 404);
+
+      const index = await getCommunityIndex(env);
+      const entry = index.find(i => i.id === id);
+      const baseName = (entry ? entry.category : "otros").toLowerCase().replace(/[^a-z0-9]+/g, "-");
+      const nameSlug = (entry ? entry.name : "community").toLowerCase().replace(/[^a-z0-9]+/g, "-");
+      let filename = `${baseName}-${nameSlug}.cfg`;
+
+      const myIndex = await getTemplatesIndex(env, userId);
+      if (myIndex.includes(filename)) {
+        filename = filename.replace(/\.cfg$/, `-${Date.now()}.cfg`);
+      }
+
+      await env.SCRIPTFORGE_KV.put(kvKey(userId, `template:${filename}`), content);
+      myIndex.push(filename);
+      await env.SCRIPTFORGE_KV.put(kvKey(userId, "templates:index"), JSON.stringify(myIndex));
+      return json({ ok: true, filename });
+    }
+    if (path.startsWith("/api/community/") && method === "GET") {
+      const id = decodeURIComponent(path.replace("/api/community/", ""));
+      const content = await env.SCRIPTFORGE_KV.get(communityKey(`script:${id}`));
+      if (content === null) return new Response("Not found", { status: 404 });
+      return new Response(content, { headers: { "Content-Type": "text/plain" } });
+    }
+
+    // ─── AI: providers status + template generation ──────────────
     if (path === "/api/ai/providers" && method === "GET") {
       try {
         const res = await authFetch(env, "/api/me/keys", rawToken);
