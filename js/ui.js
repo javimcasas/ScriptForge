@@ -59,6 +59,14 @@ function renderSidebar() {
       Community
     </button>
 
+    <button class="sidebar-item ${currentView === 'mine' ? 'active' : ''}" id="sidebarMineBtn">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+        <polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
+      </svg>
+      Mis publicaciones
+    </button>
+
     <div class="sidebar-divider"></div>
 
     <div class="sidebar-section-header">
@@ -88,6 +96,9 @@ function renderSidebar() {
 
   // Botón "Community"
   document.getElementById('sidebarCommunityBtn').addEventListener('click', () => setCommunityView());
+
+  // Botón "Mis publicaciones"
+  document.getElementById('sidebarMineBtn').addEventListener('click', () => setMineView());
 
   // Botón nueva categoría
   document.getElementById('addCategoryBtn').addEventListener('click', () => {
@@ -137,6 +148,8 @@ function highlightActiveFilter() {
   if (savedBtn) savedBtn.classList.toggle('active', currentView === 'saved');
   const communityBtn = document.getElementById('sidebarCommunityBtn');
   if (communityBtn) communityBtn.classList.toggle('active', currentView === 'community');
+  const mineBtn = document.getElementById('sidebarMineBtn');
+  if (mineBtn) mineBtn.classList.toggle('active', currentView === 'mine');
 
   document.querySelectorAll('.filter-chip').forEach(el => {
     el.classList.toggle('active', el.dataset.filter === currentFilter);
@@ -155,6 +168,8 @@ function setFilter(filter) {
   document.getElementById('savedViewer').classList.add('hidden');
   ensureCommunityViewer();
   document.getElementById('communityViewer').classList.add('hidden');
+  ensureMineViewer();
+  document.getElementById('mineViewer').classList.add('hidden');
 
   const titles = { all: 'Todos los templates' };
   document.getElementById('pageTitle').textContent = titles[filter] || filter;
@@ -177,6 +192,8 @@ function setSavedView() {
   document.getElementById('savedViewer').classList.remove('hidden');
   ensureCommunityViewer();
   document.getElementById('communityViewer').classList.add('hidden');
+  ensureMineViewer();
+  document.getElementById('mineViewer').classList.add('hidden');
 
   document.getElementById('pageTitle').textContent    = 'Scripts guardados';
   document.getElementById('pageSubtitle').textContent = 'Scripts generados y guardados desde los templates';
@@ -219,11 +236,13 @@ async function loadCommunity() {
 async function setCommunityView() {
   currentView = 'community';
   ensureCommunityViewer();
+  ensureMineViewer();
   highlightActiveFilter();
 
   document.getElementById('filterBar').classList.add('hidden');
   document.getElementById('templatesGrid').classList.add('hidden');
   document.getElementById('savedViewer').classList.add('hidden');
+  document.getElementById('mineViewer').classList.add('hidden');
   document.getElementById('communityViewer').classList.remove('hidden');
 
   document.getElementById('pageTitle').textContent    = 'Community';
@@ -438,6 +457,140 @@ async function importCommunityItem(id) {
   } catch {
     showToast('No se pudo conectar con el servidor', true);
   }
+}
+
+
+// ─── MIS PUBLICACIONES ─────────────────────────────────────────────────
+// Templates que el propio usuario ha subido a Community: aquí puede ver
+// cuántos likes/descargas tienen y despublicarlos.
+let myCommunityItems = [];
+
+function ensureMineViewer() {
+  if (document.getElementById('mineViewer')) return;
+  ensureCommunityViewer();
+  const el = document.createElement('div');
+  el.id = 'mineViewer';
+  el.className = 'saved-viewer hidden';
+  document.getElementById('communityViewer').insertAdjacentElement('afterend', el);
+}
+
+async function loadMyCommunity() {
+  try {
+    const res = await fetch('/api/community/mine');
+    const data = await res.json();
+    myCommunityItems = data.items || [];
+  } catch {
+    myCommunityItems = [];
+  }
+}
+
+async function setMineView() {
+  currentView = 'mine';
+  ensureMineViewer();
+  highlightActiveFilter();
+
+  document.getElementById('filterBar').classList.add('hidden');
+  document.getElementById('templatesGrid').classList.add('hidden');
+  document.getElementById('savedViewer').classList.add('hidden');
+  ensureCommunityViewer();
+  document.getElementById('communityViewer').classList.add('hidden');
+  document.getElementById('mineViewer').classList.remove('hidden');
+
+  document.getElementById('pageTitle').textContent    = 'Mis publicaciones';
+  document.getElementById('pageSubtitle').textContent = 'Templates que has subido a Community';
+
+  await loadMyCommunity();
+  renderMineViewer();
+}
+
+function renderMineViewer() {
+  ensureMineViewer();
+  const viewer = document.getElementById('mineViewer');
+
+  if (!myCommunityItems.length) {
+    viewer.innerHTML = `
+      <div class="saved-empty">
+        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+          <polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
+        </svg>
+        <p>Todavía no has publicado ningún template en Community. Sube uno desde el icono ↑ de cualquier tarjeta de "Todos los templates".</p>
+      </div>`;
+    return;
+  }
+
+  const cards = myCommunityItems.map(item => {
+    const color = getCategoryColor(item.category);
+    const date = item.uploadedAt ? new Date(item.uploadedAt).toLocaleDateString() : '';
+    return `
+      <div class="saved-card" data-mine-id="${item.id}">
+        <div class="saved-card-header" style="cursor:default">
+          <div class="saved-card-icon" style="background:${color.bg}; color:${color.accent}">
+            ${getCategoryIcon(item.category)}
+          </div>
+          <div class="saved-card-info">
+            <div class="saved-card-name">${item.name}</div>
+            <div class="saved-card-meta">
+              <span class="saved-card-template-tag">${item.category}</span>
+              <span class="meta-sep">·</span>
+              <span>${date}</span>
+            </div>
+          </div>
+          <div class="saved-card-actions">
+            <span class="mine-stat" title="Likes recibidos">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"/>
+              </svg>
+              ${item.likes || 0}
+            </span>
+            <span class="mine-stat" title="Veces descargado">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                <polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+              </svg>
+              ${item.imports || 0}
+            </span>
+            <button class="saved-card-btn btn-del btn-unpublish" title="Despublicar de Community" aria-label="Despublicar de Community">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <polyline points="3 6 5 6 21 6"/>
+                <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+        <div class="saved-card-preview">
+          <p>${item.description || 'Sin descripción'}</p>
+        </div>
+      </div>`;
+  }).join('');
+  viewer.innerHTML = `<div class="saved-list">${cards}</div>`;
+
+  viewer.querySelectorAll('.btn-unpublish').forEach(btn => {
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+      const card = btn.closest('[data-mine-id]');
+      const item = myCommunityItems.find(i => i.id === card.dataset.mineId);
+      if (item) openUnpublishModal(item);
+    });
+  });
+}
+
+function openUnpublishModal(item) {
+  document.getElementById('deleteSavedModalName').textContent = item.name;
+  document.getElementById('confirmDeleteSavedBtn').onclick = async () => {
+    try {
+      const res    = await fetch(`/api/community/${encodeURIComponent(item.id)}`, { method: 'DELETE' });
+      const result = await res.json();
+      if (!res.ok) { showToast(result.error || 'Error al despublicar', true); return; }
+    } catch {
+      showToast('No se pudo conectar con el servidor', true); return;
+    }
+    myCommunityItems = myCommunityItems.filter(i => i.id !== item.id);
+    closeModal('deleteSavedModal');
+    renderMineViewer();
+    showToast(`"${item.name}" despublicado de Community`);
+  };
+  openModal('deleteSavedModal');
 }
 
 

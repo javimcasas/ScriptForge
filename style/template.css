@@ -215,3 +215,11 @@
   font-size: var(--text-xs); color: var(--color-text);
 }
 .community-cat-filter input::placeholder { color: var(--color-text-faint); }
+
+/* ── Mis publicaciones: estadísticas estáticas (likes / descargas) ── */
+.mine-stat {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-size: var(--text-xs); color: var(--color-text-faint);
+  padding: 0 var(--space-2);
+}
+.mine-stat svg { flex-shrink: 0; }

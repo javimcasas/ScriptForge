@@ -358,6 +358,11 @@ export default {
     }
 
     // ─── Community: shared, searchable-by-frontend template library ──
+    if (path === "/api/community/mine" && method === "GET") {
+      const index = await getCommunityIndex(env);
+      const mine = index.filter(i => i.uploadedById === userId || i.uploadedBy === user.email);
+      return json({ items: mine });
+    }
     if (path === "/api/community" && method === "GET") {
       const index = await getCommunityIndex(env);
       const sorted = [...index].sort((a, b) => (b.likes || 0) - (a.likes || 0));
@@ -379,6 +384,24 @@ export default {
         return json({ error: "El contenido no tiene los metadatos name/category" }, 400);
       }
 
+      // ─── Anti-duplicados: compara por contenido normalizado (name+category+
+      // cuerpo del script), no por texto exacto, para detectar el mismo
+      // template aunque cambie la descripción o los espacios en blanco.
+      const normalizedBody = content
+        .split("\n")
+        .filter(l => !l.match(/^# (name|category|description):/))
+        .join("\n")
+        .trim()
+        .replace(/\s+/g, " ");
+      const dupKey = `${nameMatch[1].trim().toLowerCase()}|${categoryMatch[1].trim().toLowerCase()}|${normalizedBody.toLowerCase()}`;
+      const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(dupKey));
+      const contentHash = Array.from(new Uint8Array(digest)).map(b => b.toString(16).padStart(2, "0")).join("");
+
+      const index = await getCommunityIndex(env);
+      if (index.some(i => i.contentHash === contentHash)) {
+        return json({ error: "Este template ya está publicado en Community" }, 409);
+      }
+
       const id = crypto.randomUUID();
       const entry = {
         id,
@@ -386,12 +409,14 @@ export default {
         category: categoryMatch[1].trim(),
         description: descMatch ? descMatch[1].trim() : "",
         uploadedBy: user.email,
+        uploadedById: userId,
         uploadedAt: new Date().toISOString(),
-        likes: 0
+        likes: 0,
+        imports: 0,
+        contentHash
       };
 
       await env.SCRIPTFORGE_KV.put(communityKey(`script:${id}`), content);
-      const index = await getCommunityIndex(env);
       index.unshift(entry);
       await env.SCRIPTFORGE_KV.put(communityKey("index"), JSON.stringify(index));
       return json({ ok: true, id });
@@ -430,7 +455,27 @@ export default {
       await env.SCRIPTFORGE_KV.put(kvKey(userId, `template:${filename}`), content);
       myIndex.push(filename);
       await env.SCRIPTFORGE_KV.put(kvKey(userId, "templates:index"), JSON.stringify(myIndex));
+
+      if (entry) {
+        entry.imports = (entry.imports || 0) + 1;
+        await env.SCRIPTFORGE_KV.put(communityKey("index"), JSON.stringify(index));
+      }
+
       return json({ ok: true, filename });
+    }
+    if (path.startsWith("/api/community/") && method === "DELETE") {
+      const id = decodeURIComponent(path.replace("/api/community/", ""));
+      const index = await getCommunityIndex(env);
+      const entry = index.find(i => i.id === id);
+      if (!entry) return json({ error: "Script de Community no encontrado" }, 404);
+      if (entry.uploadedById !== userId && entry.uploadedBy !== user.email) {
+        return json({ error: "No puedes despublicar un template que no es tuyo" }, 403);
+      }
+
+      const newIndex = index.filter(i => i.id !== id);
+      await env.SCRIPTFORGE_KV.put(communityKey("index"), JSON.stringify(newIndex));
+      await env.SCRIPTFORGE_KV.delete(communityKey(`script:${id}`));
+      return json({ ok: true });
     }
     if (path.startsWith("/api/community/") && method === "GET") {
       const id = decodeURIComponent(path.replace("/api/community/", ""));
