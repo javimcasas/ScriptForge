@@ -349,8 +349,10 @@ function renderCommunityViewer() {
               </svg>
             </div>
           </div>
+          <div class="saved-card-preview">
+            <p>${item.description || 'Sin descripción'}</p>
+          </div>
           <div class="saved-card-body">
-            <p style="color:var(--color-text-muted); font-size:var(--text-xs); margin:0 0 8px">${item.description || 'Sin descripción'}</p>
             <pre class="saved-card-script" id="community-script-${item.id}">Cargando…</pre>
           </div>
         </div>`;

@@ -176,3 +176,17 @@
 .community-like-btn:active svg {
   transform: scale(1.3);
 }
+
+/* ── Community: description preview (siempre visible, sin expandir) ── */
+.saved-card-preview {
+  padding: 0 var(--space-4) var(--space-3);
+  margin-top: calc(var(--space-3) * -1);
+}
+.saved-card-preview p {
+  font-size: var(--text-xs); color: var(--color-text-muted); line-height: 1.5;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  line-clamp: 2;
+  overflow: hidden;
+}
