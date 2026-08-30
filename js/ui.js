@@ -57,7 +57,6 @@ function renderSidebar() {
         <path d="M22 21v-2a3 3 0 0 0-2.5-2.96"/>
       </svg>
       Community
-      <span class="count" id="count-community">0</span>
     </button>
 
     <div class="sidebar-divider"></div>
@@ -111,7 +110,7 @@ function renderSidebar() {
 }
 
 
-// ─── RENDER FILTER BAR ─────────────────────────────────────────────────────────────
+// ─── RENDER FILTER BAR ─────────────────────────────────────────────────────────────────
 function renderFilterBar() {
   const bar = document.getElementById('filterBar');
   const chips = categories.map(cat =>
@@ -193,6 +192,8 @@ function setSavedView() {
 // saved script which only makes sense for the one device it was made for.
 let communityItems = [];
 let communityFilter = 'all';
+let communityLikedIds = new Set();
+const _communityCache = {};
 
 function ensureCommunityViewer() {
   if (document.getElementById('communityViewer')) return;
@@ -207,8 +208,10 @@ async function loadCommunity() {
     const res = await fetch('/api/community');
     const data = await res.json();
     communityItems = data.items || [];
+    communityLikedIds = new Set(data.likedIds || []);
   } catch {
     communityItems = [];
+    communityLikedIds = new Set();
   }
   updateCounts();
 }
@@ -224,10 +227,48 @@ async function setCommunityView() {
   document.getElementById('communityViewer').classList.remove('hidden');
 
   document.getElementById('pageTitle').textContent    = 'Community';
-  document.getElementById('pageSubtitle').textContent = 'Templates compartidos por otros usuarios — búscalos y añádelos a tu biblioteca';
+  document.getElementById('pageSubtitle').textContent = 'Templates compartidos por otros usuarios — ordenados por popularidad';
 
   await loadCommunity();
   renderCommunityViewer();
+}
+
+async function getCommunityContent(id) {
+  if (_communityCache[id]) return _communityCache[id];
+  const res = await fetch(`/api/community/${encodeURIComponent(id)}`);
+  const text = await res.text();
+  const lines = text.split('\n');
+  let i = 0;
+  // Salta las líneas de metadatos (# name / # category / # description) y la línea en blanco siguiente.
+  while (i < lines.length && (lines[i].startsWith('#') || lines[i].trim() === '')) i++;
+  const content = lines.slice(i).join('\n').trimEnd();
+  _communityCache[id] = content;
+  return content;
+}
+
+async function loadCommunityContent(id) {
+  const pre = document.getElementById(`community-script-${id}`);
+  if (!pre || pre.textContent !== 'Cargando…') return;
+  try {
+    pre.textContent = await getCommunityContent(id);
+  } catch {
+    pre.textContent = '— Error al cargar el script —';
+  }
+}
+
+async function toggleCommunityLike(id) {
+  try {
+    const res = await fetch(`/api/community/${encodeURIComponent(id)}/like`, { method: 'POST' });
+    const result = await res.json();
+    if (!res.ok) { showToast(result.error || 'Error al dar like', true); return; }
+    const item = communityItems.find(i => i.id === id);
+    if (item) item.likes = result.likes;
+    if (result.liked) communityLikedIds.add(id);
+    else communityLikedIds.delete(id);
+    renderCommunityViewer();
+  } catch {
+    showToast('No se pudo conectar con el servidor', true);
+  }
 }
 
 function renderCommunityViewer() {
@@ -254,6 +295,8 @@ function renderCommunityViewer() {
       (i.description || '').toLowerCase().includes(q)
     );
   }
+  // Por defecto (y siempre) se ordena por número de likes, de más a menos.
+  filtered = [...filtered].sort((a, b) => (b.likes || 0) - (a.likes || 0));
 
   if (!filtered.length) {
     viewer.innerHTML = chipsBar + `
@@ -271,6 +314,7 @@ function renderCommunityViewer() {
     const cards = filtered.map(item => {
       const color = getCategoryColor(item.category);
       const date = item.uploadedAt ? new Date(item.uploadedAt).toLocaleDateString() : '';
+      const liked = communityLikedIds.has(item.id);
       return `
         <div class="saved-card" data-community-id="${item.id}">
           <div class="saved-card-header">
@@ -288,16 +332,26 @@ function renderCommunityViewer() {
               </div>
             </div>
             <div class="saved-card-actions">
+              <button class="community-like-btn ${liked ? 'liked' : ''}" title="${liked ? 'Quitar like' : 'Dar like'}" aria-label="Dar like">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"/>
+                </svg>
+                <span class="like-count">${item.likes || 0}</span>
+              </button>
               <button class="saved-card-btn btn-import-community" title="Añadir a mis templates" aria-label="Añadir a mis templates">
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                   <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
                   <polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
                 </svg>
               </button>
+              <svg class="saved-card-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <polyline points="6 9 12 15 18 9"/>
+              </svg>
             </div>
           </div>
-          <div class="saved-card-body" style="padding-top:0">
+          <div class="saved-card-body">
             <p style="color:var(--color-text-muted); font-size:var(--text-xs); margin:0 0 8px">${item.description || 'Sin descripción'}</p>
+            <pre class="saved-card-script" id="community-script-${item.id}">Cargando…</pre>
           </div>
         </div>`;
     }).join('');
@@ -308,6 +362,25 @@ function renderCommunityViewer() {
     btn.addEventListener('click', () => {
       communityFilter = btn.dataset.communityFilter;
       renderCommunityViewer();
+    });
+  });
+
+  // Click en la tarjeta (fuera de botones) expande y muestra los comandos del template.
+  viewer.querySelectorAll('[data-community-id]').forEach(card => {
+    const id = card.dataset.communityId;
+    card.querySelector('.saved-card-header').addEventListener('click', async e => {
+      if (e.target.closest('button')) return;
+      const isExpanded = card.classList.contains('expanded');
+      card.classList.toggle('expanded', !isExpanded);
+      if (!isExpanded) await loadCommunityContent(id);
+    });
+  });
+
+  viewer.querySelectorAll('.community-like-btn').forEach(btn => {
+    btn.addEventListener('click', async e => {
+      e.stopPropagation();
+      const card = btn.closest('[data-community-id]');
+      await toggleCommunityLike(card.dataset.communityId);
     });
   });
 
@@ -351,7 +424,7 @@ async function importCommunityItem(id) {
 }
 
 
-// ─── RENDER SAVED VIEWER ─────────────────────────────────────────────────────────────
+// ─── RENDER SAVED VIEWER ────────────────────────────────────────────────────────────────
 function renderSavedViewer() {
   const viewer = document.getElementById('savedViewer');
 
@@ -523,9 +596,6 @@ function updateCounts() {
 
   const countSaved = document.getElementById('count-saved');
   if (countSaved) countSaved.textContent = savedScripts.length;
-
-  const countCommunity = document.getElementById('count-community');
-  if (countCommunity) countCommunity.textContent = communityItems.length;
 
   categories.forEach(cat => {
     const el = document.getElementById(`count-${cat.id}`);
@@ -703,7 +773,7 @@ function generateScript() {
 }
 
 
-// ─── OPEN EDIT MODAL ───────────────────────────────────────────────────────────────
+// ─── OPEN EDIT MODAL ────────────────────────────────────────────────────────────────
 function openEditModal(template) {
   const raw = buildRawCfg(template);
   document.getElementById('editModalSubtitle').textContent = template.id + '.cfg';
