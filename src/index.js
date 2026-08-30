@@ -83,6 +83,10 @@ async function getCommunityIndex(env) {
   const raw = await env.SCRIPTFORGE_KV.get(communityKey("index"));
   return raw ? JSON.parse(raw) : [];
 }
+async function getCommunityLikes(env, userId) {
+  const raw = await env.SCRIPTFORGE_KV.get(kvKey(userId, "community:liked"));
+  return raw ? JSON.parse(raw) : [];
+}
 
 // ─── AI generation: reveal the user's own key from smartmatrix-auth via
 // Service Binding (a plain fetch() to another *.workers.dev domain from
@@ -355,7 +359,10 @@ export default {
 
     // ─── Community: shared, searchable-by-frontend template library ──
     if (path === "/api/community" && method === "GET") {
-      return json({ items: await getCommunityIndex(env) });
+      const index = await getCommunityIndex(env);
+      const sorted = [...index].sort((a, b) => (b.likes || 0) - (a.likes || 0));
+      const likedIds = await getCommunityLikes(env, userId);
+      return json({ items: sorted, likedIds });
     }
     if (path === "/api/community/upload" && method === "POST") {
       const data = await request.json();
@@ -379,7 +386,8 @@ export default {
         category: categoryMatch[1].trim(),
         description: descMatch ? descMatch[1].trim() : "",
         uploadedBy: user.email,
-        uploadedAt: new Date().toISOString()
+        uploadedAt: new Date().toISOString(),
+        likes: 0
       };
 
       await env.SCRIPTFORGE_KV.put(communityKey(`script:${id}`), content);
@@ -387,6 +395,21 @@ export default {
       index.unshift(entry);
       await env.SCRIPTFORGE_KV.put(communityKey("index"), JSON.stringify(index));
       return json({ ok: true, id });
+    }
+    if (path.startsWith("/api/community/") && path.endsWith("/like") && method === "POST") {
+      const id = decodeURIComponent(path.replace("/api/community/", "").replace("/like", ""));
+      const index = await getCommunityIndex(env);
+      const entry = index.find(i => i.id === id);
+      if (!entry) return json({ error: "Script de Community no encontrado" }, 404);
+
+      const liked = await getCommunityLikes(env, userId);
+      const alreadyLiked = liked.includes(id);
+      entry.likes = Math.max(0, (entry.likes || 0) + (alreadyLiked ? -1 : 1));
+      const newLiked = alreadyLiked ? liked.filter(x => x !== id) : [...liked, id];
+
+      await env.SCRIPTFORGE_KV.put(kvKey(userId, "community:liked"), JSON.stringify(newLiked));
+      await env.SCRIPTFORGE_KV.put(communityKey("index"), JSON.stringify(index));
+      return json({ ok: true, likes: entry.likes, liked: !alreadyLiked });
     }
     if (path.startsWith("/api/community/") && path.endsWith("/import") && method === "POST") {
       const id = decodeURIComponent(path.replace("/api/community/", "").replace("/import", ""));
