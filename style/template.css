@@ -191,9 +191,15 @@
   overflow: hidden;
 }
 
-/* ── Community: filtro de categoría por texto libre ──
+/* ── Community: toolbar (filtro de categoría + orden) ──
    Sustituye a los chips auto-generados (poco fiables al depender de
-   texto libre de cada usuario) por un input que el propio usuario escribe. */
+   texto libre de cada usuario) por un input que el propio usuario escribe,
+   más un toggle para elegir el criterio de orden. */
+.community-toolbar {
+  display: flex; align-items: center; gap: var(--space-3);
+  margin-bottom: var(--space-3);
+  flex-wrap: wrap;
+}
 .community-cat-filter {
   display: flex; align-items: center; gap: var(--space-2);
   height: 36px; padding: 0 var(--space-3);
@@ -202,7 +208,8 @@
   border-radius: var(--radius-md);
   color: var(--color-text-faint);
   max-width: 320px;
-  margin-bottom: var(--space-3);
+  flex: 1;
+  min-width: 200px;
   transition: border-color var(--transition-interactive), box-shadow var(--transition-interactive);
 }
 .community-cat-filter:has(input:focus) {
@@ -216,10 +223,31 @@
 }
 .community-cat-filter input::placeholder { color: var(--color-text-faint); }
 
-/* ── Mis publicaciones: estadísticas estáticas (likes / descargas) ── */
+.community-sort-toggle {
+  display: flex; gap: 2px;
+  background: var(--color-surface-offset);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: 2px;
+  flex-shrink: 0;
+}
+.sort-btn {
+  height: 30px; padding: 0 var(--space-3);
+  border-radius: calc(var(--radius-md) - 2px);
+  font-size: var(--text-xs); font-weight: 500;
+  color: var(--color-text-muted);
+  display: flex; align-items: center; gap: 4px;
+  transition: background var(--transition-interactive), color var(--transition-interactive);
+  white-space: nowrap;
+}
+.sort-btn:hover { color: var(--color-text); }
+.sort-btn.active { background: var(--color-primary); color: var(--color-text-inverse); }
+
+/* ── Mis publicaciones / Community: estadísticas estáticas (likes / descargas) ── */
 .mine-stat {
   display: inline-flex; align-items: center; gap: 4px;
   font-size: var(--text-xs); color: var(--color-text-faint);
   padding: 0 var(--space-2);
+  flex-shrink: 0;
 }
 .mine-stat svg { flex-shrink: 0; }

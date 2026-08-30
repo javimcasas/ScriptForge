@@ -209,6 +209,7 @@ function setSavedView() {
 // saved script which only makes sense for the one device it was made for.
 let communityItems = [];
 let communityCategoryQuery = '';
+let communitySortBy = 'likes'; // 'likes' | 'imports'
 let communityLikedIds = new Set();
 const _communityCache = {};
 
@@ -246,7 +247,7 @@ async function setCommunityView() {
   document.getElementById('communityViewer').classList.remove('hidden');
 
   document.getElementById('pageTitle').textContent    = 'Community';
-  document.getElementById('pageSubtitle').textContent = 'Templates compartidos por otros usuarios — ordenados por popularidad';
+  document.getElementById('pageSubtitle').textContent = 'Templates compartidos por otros usuarios';
 
   await loadCommunity();
   renderCommunityViewer();
@@ -290,19 +291,36 @@ async function toggleCommunityLike(id) {
   }
 }
 
-// Estructura fija (input de categoría + contenedor de la lista) para que
-// escribir en el filtro no pierda el foco al re-renderizar en cada tecla:
-// solo #communityList se reconstruye, el input nunca se recrea.
+// Estructura fija (filtro de categoría + toggle de orden + contenedor de la
+// lista) para que escribir en el filtro no pierda el foco al re-renderizar
+// en cada tecla: solo #communityList se reconstruye.
 function renderCommunityViewer() {
   ensureCommunityViewer();
   const viewer = document.getElementById('communityViewer');
 
   viewer.innerHTML = `
-    <div class="community-cat-filter">
-      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
-      </svg>
-      <input type="text" id="communityCatInput" placeholder="Filtrar por categoría… (ej: VLAN, AAA)" autocomplete="off">
+    <div class="community-toolbar">
+      <div class="community-cat-filter">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+        </svg>
+        <input type="text" id="communityCatInput" placeholder="Filtrar por categoría… (ej: VLAN, AAA)" autocomplete="off">
+      </div>
+      <div class="community-sort-toggle">
+        <button class="sort-btn ${communitySortBy === 'likes' ? 'active' : ''}" data-sort="likes">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"/>
+          </svg>
+          Más likes
+        </button>
+        <button class="sort-btn ${communitySortBy === 'imports' ? 'active' : ''}" data-sort="imports">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+            <polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+          </svg>
+          Más descargas
+        </button>
+      </div>
     </div>
     <div id="communityList"></div>
   `;
@@ -312,6 +330,14 @@ function renderCommunityViewer() {
   input.addEventListener('input', e => {
     communityCategoryQuery = e.target.value;
     renderCommunityList();
+  });
+
+  viewer.querySelectorAll('.sort-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      communitySortBy = btn.dataset.sort;
+      viewer.querySelectorAll('.sort-btn').forEach(b => b.classList.toggle('active', b === btn));
+      renderCommunityList();
+    });
   });
 
   renderCommunityList();
@@ -335,8 +361,8 @@ function renderCommunityList() {
       (i.description || '').toLowerCase().includes(q)
     );
   }
-  // Por defecto (y siempre) se ordena por número de likes, de más a menos.
-  filtered = [...filtered].sort((a, b) => (b.likes || 0) - (a.likes || 0));
+  const sortKey = communitySortBy === 'imports' ? 'imports' : 'likes';
+  filtered = [...filtered].sort((a, b) => (b[sortKey] || 0) - (a[sortKey] || 0));
 
   if (!filtered.length) {
     list.innerHTML = `
@@ -380,6 +406,13 @@ function renderCommunityList() {
               </svg>
               <span class="like-count">${item.likes || 0}</span>
             </button>
+            <span class="mine-stat" title="Veces descargado">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                <polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+              </svg>
+              ${item.imports || 0}
+            </span>
             <button class="saved-card-btn btn-import-community" title="Añadir a mis templates" aria-label="Añadir a mis templates">
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                 <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>

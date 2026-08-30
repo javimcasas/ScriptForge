@@ -88,6 +88,19 @@
   .config-bar { flex-direction: column; }
 
   #aiModal .form-field[style*="grid-template-columns"] { grid-template-columns: 1fr !important; }
+
+  /* ── Community / Mis publicaciones: toolbar y tarjetas apiladas ── */
+  .community-toolbar { flex-direction: column; align-items: stretch; }
+  .community-cat-filter { max-width: 100%; min-width: 0; }
+  .community-sort-toggle { width: 100%; }
+  .community-sort-toggle .sort-btn { flex: 1; justify-content: center; }
+
+  .saved-card-header { flex-wrap: wrap; row-gap: var(--space-2); }
+  .saved-card-actions {
+    flex-wrap: wrap; justify-content: flex-end; row-gap: var(--space-1);
+    margin-left: auto; width: 100%;
+  }
+  .community-like-btn, .mine-stat { font-size: 10px; }
 }
 
 /* ============================================================
@@ -123,6 +136,12 @@
 
   .modal-footer { flex-wrap: wrap; }
   .modal-footer button { flex: 1; justify-content: center; }
+
+  /* ── Community: en pantallas muy estrechas, la info de la tarjeta
+     pasa a ocupar toda la fila y los stats se reducen aún más. ── */
+  .saved-card-info { flex-basis: 100%; }
+  .community-like-btn .like-count,
+  .mine-stat { padding: 0 var(--space-1); }
 }
 
 /* ============================================================
