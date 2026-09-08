@@ -1,3 +1,6 @@
+// SmartMatrix hub — where to send anyone whose session is missing or expired.
+const HUB_URL = "https://hubsmartmatrix.com/";
+
 const DEFAULT_CATEGORIES = [
   { id: "VLAN", icon: "network" },
   { id: "AAA", icon: "shield" },
@@ -201,7 +204,9 @@ export default {
     if (ssoParam) {
       const payload = await verifyToken(ssoParam, env.SSO_SECRET);
       if (!payload) {
-        return new Response("Invalid or expired session token", { status: 401 });
+        // Expired/invalid handoff token — bounce to the hub, which re-checks
+        // its own session and shows the login screen.
+        return Response.redirect(HUB_URL, 302);
       }
       const sessionToken = await signToken(
         { userId: payload.userId, email: payload.email, exp: Date.now() + 1000 * 60 * 60 * 24 * 30 },
@@ -222,7 +227,7 @@ export default {
 
     if (!user) {
       if (path.startsWith("/api/")) return json({ error: "Not authenticated" }, 401);
-      return Response.redirect("https://smartmatrix.javimcasas.workers.dev/", 302);
+      return Response.redirect(HUB_URL, 302);
     }
 
     if (!path.startsWith("/api/")) {
