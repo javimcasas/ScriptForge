@@ -209,7 +209,7 @@ export default {
         return Response.redirect(HUB_URL, 302);
       }
       const sessionToken = await signToken(
-        { userId: payload.userId, email: payload.email, exp: Date.now() + 1000 * 60 * 60 * 24 * 30 },
+        { userId: payload.userId, email: payload.email, exp: Date.now() + 1000 * 60 * 60 * 24 },
         env.SSO_SECRET
       );
       url.searchParams.delete("sso");
@@ -217,7 +217,7 @@ export default {
         status: 302,
         headers: {
           "Location": url.pathname + (url.search || ""),
-          "Set-Cookie": `sf_session=${sessionToken}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=2592000`
+          "Set-Cookie": `sf_session=${sessionToken}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=86400`
         }
       });
     }
