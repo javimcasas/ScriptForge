@@ -54,10 +54,21 @@ function getCookie(request, name) {
   return match ? match[1] : null;
 }
 
-async function getUserFromCookie(request, env) {
-  const cookieToken = getCookie(request, "sf_session");
-  return verifyToken(cookieToken, env.SSO_SECRET);
+// The raw token behind this request: `Authorization: Bearer` when another
+// SmartMatrix Worker acts as the user (HyperChat forwards the user's own
+// token through the Service Binding), else the session cookie.
+function getRequestToken(request) {
+  const auth = request.headers.get("Authorization") || "";
+  if (auth.startsWith("Bearer ")) return auth.slice(7).trim();
+  return getCookie(request, "sf_session");
 }
+
+async function getUserFromCookie(request, env) {
+  return verifyToken(getRequestToken(request), env.SSO_SECRET);
+}
+
+// Lifetime of the bearer minted for the HyperChat widget (see /api/hyperchat/token).
+const HYPERCHAT_TOKEN_TTL_MS = 60 * 60 * 1000;
 
 function kvKey(userId, key) {
   return `user:${userId}:${key}`;
@@ -208,8 +219,10 @@ export default {
         // its own session and shows the login screen.
         return Response.redirect(HUB_URL, 302);
       }
+      // `apps` travels with the session so the HyperChat widget can check the
+      // user's permission without a round-trip to the auth service.
       const sessionToken = await signToken(
-        { userId: payload.userId, email: payload.email, exp: Date.now() + 1000 * 60 * 60 * 24 },
+        { userId: payload.userId, email: payload.email, apps: payload.apps, exp: Date.now() + 1000 * 60 * 60 * 24 },
         env.SSO_SECRET
       );
       url.searchParams.delete("sso");
@@ -235,7 +248,26 @@ export default {
     }
 
     const userId = user.userId;
-    const rawToken = getCookie(request, "sf_session");
+    const rawToken = getRequestToken(request);
+
+    // ─── HyperChat widget token ─────────────────────────────────
+    // The floating HyperChat bubble (widget.js) asks for a short-lived
+    // bearer it can present to hyperchat.hubsmartmatrix.com from this
+    // page. Only users holding the `hyperchat` permission get one — no
+    // token, no bubble. Same payload as the session so HyperChat can
+    // forward it back here (and to the other apps) as the user.
+    if (path === "/api/hyperchat/token" && method === "GET") {
+      if (!Array.isArray(user.apps) || !user.apps.includes("hyperchat")) {
+        return json({ error: "HyperChat is not enabled for this user" }, 403);
+      }
+      const expiresAt = Date.now() + HYPERCHAT_TOKEN_TTL_MS;
+      const token = await signToken(
+        { userId: user.userId, email: user.email, apps: user.apps, exp: expiresAt, hc: { app: "scriptforge" } },
+        env.SSO_SECRET
+      );
+      return json({ token, expires_at: expiresAt, app: "scriptforge" });
+    }
+
 
     if (path === "/api/categories" && method === "GET") {
       return json({ categories: await getCategories(env, userId) });
