@@ -432,26 +432,13 @@ function openDeleteCatModal(catId) {
 }
 
 
-// ─── THEME TOGGLE ────────────────────────────────────
+// ─── THEME ───────────────────────────────────────────
+// Chosen in the SmartMatrix profile; the inline script at the top of
+// index.html seeds 'sf-theme' from the shared smx_theme cookie.
 (function () {
-  const btn  = document.querySelector('[data-theme-toggle]');
-  const root = document.documentElement;
-
-  // Read saved preference → otherwise use system preference
   const stored = localStorage.getItem('sf-theme');
-  let dark = stored ? stored === 'dark' : window.matchMedia('(prefers-color-scheme: dark)').matches;
-
-  function applyTheme() {
-    root.setAttribute('data-theme', dark ? 'dark' : 'light');
-    localStorage.setItem('sf-theme', dark ? 'dark' : 'light');
-    btn.innerHTML = dark
-      ? `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>`
-      : `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>`;
-    btn.setAttribute('aria-label', dark ? 'Switch to light mode' : 'Switch to dark mode');
-  }
-
-  applyTheme();
-  btn.addEventListener('click', () => { dark = !dark; applyTheme(); });
+  const dark = stored ? stored === 'dark' : window.matchMedia('(prefers-color-scheme: dark)').matches;
+  document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light');
 })();
 
 

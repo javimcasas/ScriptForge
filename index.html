@@ -1,6 +1,29 @@
 <!DOCTYPE html>
 <html lang="en" data-theme="dark">
 <head>
+  <script>
+    // SmartMatrix account preferences (set in the hub profile): the hub mirrors
+    // theme and language into the smx_theme / smx_lang cookies on
+    // .hubsmartmatrix.com. Paint the theme before first paint and seed this
+    // app's own storage keys so its scripts agree. Language: the profile
+    // choice wins whenever it changes; an in-app switch sticks until then.
+    (function (themeKey, langKey) {
+      try {
+        var get = function (n) { var m = document.cookie.match(new RegExp('(?:^|; )' + n + '=([a-z]+)')); return m ? m[1] : null; };
+        var theme = get('smx_theme');
+        if (theme === 'system') theme = matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+        if (theme === 'light' || theme === 'dark') {
+          document.documentElement.setAttribute('data-theme', theme);
+          localStorage.setItem(themeKey, theme);
+        }
+        var lang = get('smx_lang');
+        if (langKey && lang && lang !== localStorage.getItem(langKey + ':smx')) {
+          localStorage.setItem(langKey, lang);
+          localStorage.setItem(langKey + ':smx', lang);
+        }
+      } catch (e) { /* storage blocked: the app's own defaults apply */ }
+    })('sf-theme', null);
+  </script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>ScriptForge — Template Engine</title>
@@ -37,9 +60,6 @@
 
   <div class="topbar-actions">
     <div data-smartmatrix-switcher data-current="scriptforge"></div>
-    <button class="btn-icon" data-theme-toggle aria-label="Toggle theme" title="Toggle theme">
-      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
-    </button>
     <button class="btn-ghost" id="exportBtn" title="Export all templates" style="white-space:nowrap">
       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
     </button>
