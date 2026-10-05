@@ -1,5 +1,11 @@
 // SmartMatrix hub — where to send anyone whose session is missing or expired.
 const HUB_URL = "https://hubsmartmatrix.com/";
+// Where a page request without a session goes: the hub's launch route for
+// this app, so signing in lands back here (a `#/route` rides along every
+// redirect and the hub puts it back on the `?sso=` URL). Bad handoff tokens
+// still bounce to the hub root: never loop through launch with a token the
+// hub just issued.
+const LAUNCH_URL = `${HUB_URL}launch/scriptforge`;
 
 const DEFAULT_CATEGORIES = [
   { id: "VLAN", icon: "network" },
@@ -240,7 +246,7 @@ export default {
 
     if (!user) {
       if (path.startsWith("/api/")) return json({ error: "Not authenticated" }, 401);
-      return Response.redirect(HUB_URL, 302);
+      return Response.redirect(LAUNCH_URL, 302);
     }
 
     if (!path.startsWith("/api/")) {
