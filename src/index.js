@@ -45,13 +45,18 @@ async function verifyToken(token, secret) {
   if (!token) return null;
   const [payloadB64, sigB64] = token.split(".");
   if (!payloadB64 || !sigB64) return null;
-  const enc = new TextEncoder();
-  const key = await crypto.subtle.importKey("raw", enc.encode(secret), { name: "HMAC", hash: "SHA-256" }, false, ["verify"]);
-  const valid = await crypto.subtle.verify("HMAC", key, b64urlDecode(sigB64), enc.encode(payloadB64));
-  if (!valid) return null;
-  const payload = JSON.parse(new TextDecoder().decode(b64urlDecode(payloadB64)));
-  if (payload.exp && Date.now() > payload.exp) return null;
-  return payload;
+  try {
+    const enc = new TextEncoder();
+    const key = await crypto.subtle.importKey("raw", enc.encode(secret), { name: "HMAC", hash: "SHA-256" }, false, ["verify"]);
+    const valid = await crypto.subtle.verify("HMAC", key, b64urlDecode(sigB64), enc.encode(payloadB64));
+    if (!valid) return null;
+    const payload = JSON.parse(new TextDecoder().decode(b64urlDecode(payloadB64)));
+    if (payload.exp && Date.now() > payload.exp) return null;
+    return payload;
+  } catch {
+    // Malformed token (bad base64, non-JSON payload): a logged-out user, not a 500.
+    return null;
+  }
 }
 
 function getCookie(request, name) {
