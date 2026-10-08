@@ -145,7 +145,7 @@ async function callPerplexity(apiKey, prompt, model) {
   });
   if (!res.ok) throw new Error(`Perplexity ${res.status}: ${(await res.text()).slice(0, 300)}`);
   const data = await res.json();
-  return data.choices[0].message.content;
+  return { text: data.choices[0].message.content, usage: usageFrom("perplexity", data) };
 }
 
 async function callOpenAI(apiKey, prompt, model) {
@@ -161,7 +161,7 @@ async function callOpenAI(apiKey, prompt, model) {
   });
   if (!res.ok) throw new Error(`OpenAI ${res.status}: ${(await res.text()).slice(0, 300)}`);
   const data = await res.json();
-  return data.choices[0].message.content;
+  return { text: data.choices[0].message.content, usage: usageFrom("openai", data) };
 }
 
 async function callAnthropic(apiKey, prompt, model) {
@@ -177,13 +177,44 @@ async function callAnthropic(apiKey, prompt, model) {
   });
   if (!res.ok) throw new Error(`Anthropic ${res.status}: ${(await res.text()).slice(0, 300)}`);
   const data = await res.json();
-  return data.content[0].text;
+  return { text: data.content[0].text, usage: usageFrom("anthropic", data) };
 }
 
-async function callAI(provider, apiKey, prompt, model) {
-  if (provider === "openai") return callOpenAI(apiKey, prompt, model);
-  if (provider === "anthropic") return callAnthropic(apiKey, prompt, model);
-  return callPerplexity(apiKey, prompt, model);
+// `meter` ({ env, token, action }) reports the call to the usage ledger.
+async function callAI(provider, apiKey, prompt, model, meter) {
+  const { text, usage } = provider === "openai" ? await callOpenAI(apiKey, prompt, model)
+    : provider === "anthropic" ? await callAnthropic(apiKey, prompt, model)
+    : await callPerplexity(apiKey, prompt, model);
+  await reportAiUsage(meter, { provider, model: model || "unknown", usage });
+  return text;
+}
+
+// ─── AI usage report ───────────────────────────────────────────────
+// Every finished AI call goes to smartmatrix-auth's ledger
+// (POST /api/me/ai-usage): what the admin panel costs per user. Never
+// throws: a lost report must not fail the user's request.
+async function reportAiUsage(meter, { provider, model, usage }) {
+  if (!meter?.env?.AUTH || !meter.token) return;
+  try {
+    const res = await meter.env.AUTH.fetch("https://internal/api/me/ai-usage", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${meter.token}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ app: "scriptforge", action: meter.action, provider, model, ...usage })
+    });
+    if (!res.ok) console.warn(`ai-usage report rejected: ${res.status}`);
+  } catch (e) {
+    console.warn(`ai-usage report failed: ${e.message}`);
+  }
+}
+
+// A provider's `usage` block → { input (uncached), output, cacheRead, cacheWrite }.
+function usageFrom(provider, data) {
+  const u = data?.usage || {};
+  if (provider === "anthropic") {
+    return { input: u.input_tokens || 0, output: u.output_tokens || 0, cacheRead: u.cache_read_input_tokens || 0, cacheWrite: u.cache_creation_input_tokens || 0 };
+  }
+  const cached = u.prompt_tokens_details?.cached_tokens || 0;
+  return { input: Math.max(0, (u.prompt_tokens || 0) - cached), output: u.completion_tokens || 0, cacheRead: cached, cacheWrite: 0 };
 }
 
 function sanitizeCfgOutput(text) {
@@ -559,7 +590,7 @@ export default {
       const prompt = buildTemplatePrompt(description.trim(), cats);
 
       try {
-        const raw = await callAI(chosenProvider, apiKey, prompt, model);
+        const raw = await callAI(chosenProvider, apiKey, prompt, model, { env, token: rawToken, action: "generate_template" });
         const content = sanitizeCfgOutput(raw);
         if (!content.startsWith("#")) {
           return json({ error: "The AI response didn't match the expected template format. Try again or rephrase your request." }, 502);
