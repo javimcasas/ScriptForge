@@ -155,8 +155,8 @@ async function callOpenAI(apiKey, prompt, model) {
     body: JSON.stringify({
       model,
       messages: [{ role: "user", content: prompt }],
-      max_tokens: 3000,
-      temperature: 0.2
+      // Reasoning models: no sampling params, and the cap covers reasoning too.
+      max_completion_tokens: 8000
     })
   });
   if (!res.ok) throw new Error(`OpenAI ${res.status}: ${(await res.text()).slice(0, 300)}`);
@@ -170,14 +170,14 @@ async function callAnthropic(apiKey, prompt, model) {
     headers: { "x-api-key": apiKey, "anthropic-version": "2023-06-01", "Content-Type": "application/json" },
     body: JSON.stringify({
       model,
-      max_tokens: 3000,
-      temperature: 0.2,
+      // Current Claude models reject sampling params (temperature) with a 400.
+      max_tokens: 8000,
       messages: [{ role: "user", content: prompt }]
     })
   });
   if (!res.ok) throw new Error(`Anthropic ${res.status}: ${(await res.text()).slice(0, 300)}`);
   const data = await res.json();
-  return { text: data.content[0].text, usage: usageFrom("anthropic", data) };
+  return { text: (data.content || []).filter(b => b.type === "text").map(b => b.text).join(""), usage: usageFrom("anthropic", data) };
 }
 
 // `meter` ({ env, token, action }) reports the call to the usage ledger.
