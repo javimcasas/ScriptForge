@@ -583,7 +583,7 @@ export default {
 
       const apiKey = await revealApiKey(env, chosenProvider, rawToken);
       if (!apiKey) {
-        return json({ error: `No ${chosenProvider} API key configured. Add it in your SmartMatrix profile.` }, 400);
+        return json({ error: `No ${chosenProvider} API key configured. ScriptForge uses your own AI key — add it in your SmartMatrix profile (hubsmartmatrix.com/profile.html).` }, 400);
       }
 
       const cats = (categoryIds && categoryIds.length) ? categoryIds : (await getCategories(env, userId)).map(c => c.id);
