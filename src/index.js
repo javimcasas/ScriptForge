@@ -1,3 +1,5 @@
+import { handleAccountDelete } from "./account-delete.js";
+
 // SmartMatrix hub — where to send anyone whose session is missing or expired.
 const HUB_URL = "https://hubsmartmatrix.com/";
 // Where a page request without a session goes: the hub's launch route for
@@ -249,6 +251,10 @@ RULES:
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
+
+    // Account deleted in smartmatrix-auth: drop this user's data (binding only).
+    const deletion = await handleAccountDelete(request, env, url);
+    if (deletion) return deletion;
     const path = url.pathname;
     const method = request.method;
 
